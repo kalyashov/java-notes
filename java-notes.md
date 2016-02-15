@@ -324,6 +324,7 @@
 	} 
 
 **Output:**
+<<<<<<< HEAD
 >Constructor w/ int arg only, petalCount= 47 
 
 >String & int args 
@@ -331,6 +332,12 @@
 >default constructor (no args) 
 
 >petalCount = 47 s = hi 
+=======
+>Constructor w/ int arg only, petalCount= 47 </br>
+>String & int args </br>
+>default constructor (no args) </br>
+>petalCount = 47 s = hi </br>
+>>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
 
  При вызове одного конструктора через this вызывать второй запрещается. Вдобавок вызов другого конструктора должен быть первой выполняемой операцией, иначе компилятор выдаст сообщение об ошибке.
@@ -447,6 +454,7 @@
 	} 
 
 **Output:**
+<<<<<<< HEAD
 >Inside main() 
 
 >Cup(1) 
@@ -454,6 +462,12 @@
 >Cup(2) 
 
 >f(99)
+=======
+>Inside main() </br>
+>Cup(1) </br>
+>Cup(2) </br>
+>f(99) </br>
+>>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
 
 ###Инициализация нестатических данных экземпляра
@@ -506,6 +520,7 @@
 	  	}
 	} 
 **Output:**
+<<<<<<< HEAD
 >Inside main() 
 
 >Mug(1) 
@@ -527,6 +542,19 @@
 >Mugs(int) 
 
 >new Mugs(1) completed 
+=======
+>Inside main() </br>
+>Mug(1) </br>
+>Mug(2) </br>
+>mug1 & mug2 initialized </br>
+>Mugs() </br>
+>new Mugs() completed </br>
+>Mug(1) </br>
+>Mug(2) </br>
+>mug1 & mug2 initialized </br>
+>Mugs(int) </br>
+>new Mugs(1) completed </br>
+>>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
 
  Такой синтаксис необходим для поддержки инициализации анонимных внутренних классов, но он также гарантирует, что некоторые операции будут выполнены независимо от того, какой именно конструктор был вызван в программе. Секция инициализации экземпляра выполняется раньше любых конструкторов.
@@ -584,11 +612,17 @@
 	} 
 **Output:** (Sample)
 
+<<<<<<< HEAD
 >47 3.14 11.11 
 
 >one two three 
 
 >A@1a46e30 A@3e25a5 A@19821f 
+=======
+>47 3.14 11.11 </br>
+>one two three </br>
+>A@1a46e30 A@3e25a5 A@19821f </br>
+>>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
  Print() принимает массив объектов типа Object, перебирает его элементы и выводит их.
 
@@ -620,6 +654,7 @@
 	} 
 
 **Output: (75% match)**
+<<<<<<< HEAD
 >47 3.14 11.11 
 
 >47 3.14 11.11 
@@ -628,6 +663,12 @@
 
 >A@1bab50a A@c3c749 A@150bd4d 
 
+=======
+>47 3.14 11.11 </br>
+>47 3.14 11.11 </br>
+>one two three </br>
+>A@1bab50a A@c3c749 A@150bd4d </br>
+>>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 >1 2 3 4
 
  Списки аргументов переменной длины избавляют от необходимости явной записи синтаксиса массивов – компилятор делает это автоматически.
@@ -654,11 +695,17 @@
 	} 
 
 **Output:**
+<<<<<<< HEAD
 >required: 1 one
 
 >required: 2 two three
 
 >required: 0 
+=======
+>required: 1 one </br>
+>required: 2 two three </br>
+>required: 0 </br>
+>>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
 
  Следующий пример показывает, что список аргументов переменной длины превращается в массив, а при отсутствии элементов он становится массивом нулевой длины.
@@ -933,6 +980,7 @@
 	  }
 	} 
 **Output:**
+<<<<<<< HEAD
 >Inside Bath()
 
 >Soap()
@@ -950,6 +998,17 @@
 >toy = 3.14 
 
 >castille = Constructed 
+=======
+>Inside Bath() </br>
+>Soap() </br>
+>s1 = Happy </br>
+>s2 = Happy </br>
+>s3 = Joy </br>
+>s4 = Joy </br>
+>i = 47 </br>
+>toy = 3.14 </br>
+>castille = Constructed </br>
+>>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
 
 ###Синтаксис наследования
@@ -1012,6 +1071,7 @@
 	} 
 
 **Output:**
+<<<<<<< HEAD
 >Cleanser dilute() apply() Detergent.scrub() scrub() foam() 
 
 >Testing base class: 
@@ -1955,6 +2015,11 @@
 
 
 
+=======
+>Cleanser dilute() apply() Detergent.scrub() scrub() foam() </br>
+>Testing base class: </br>
+>Cleanser dilute() apply() scrub() </br>
+>>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
 
 
