@@ -324,7 +324,7 @@
 	} 
 
 **Output:**
-<<<<<<< HEAD
+
 >Constructor w/ int arg only, petalCount= 47 
 
 >String & int args 
@@ -332,12 +332,6 @@
 >default constructor (no args) 
 
 >petalCount = 47 s = hi 
-=======
->Constructor w/ int arg only, petalCount= 47 </br>
->String & int args </br>
->default constructor (no args) </br>
->petalCount = 47 s = hi </br>
->>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
 
  При вызове одного конструктора через this вызывать второй запрещается. Вдобавок вызов другого конструктора должен быть первой выполняемой операцией, иначе компилятор выдаст сообщение об ошибке.
@@ -454,7 +448,7 @@
 	} 
 
 **Output:**
-<<<<<<< HEAD
+
 >Inside main() 
 
 >Cup(1) 
@@ -462,12 +456,6 @@
 >Cup(2) 
 
 >f(99)
-=======
->Inside main() </br>
->Cup(1) </br>
->Cup(2) </br>
->f(99) </br>
->>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
 
 ###Инициализация нестатических данных экземпляра
@@ -520,7 +508,7 @@
 	  	}
 	} 
 **Output:**
-<<<<<<< HEAD
+
 >Inside main() 
 
 >Mug(1) 
@@ -542,19 +530,6 @@
 >Mugs(int) 
 
 >new Mugs(1) completed 
-=======
->Inside main() </br>
->Mug(1) </br>
->Mug(2) </br>
->mug1 & mug2 initialized </br>
->Mugs() </br>
->new Mugs() completed </br>
->Mug(1) </br>
->Mug(2) </br>
->mug1 & mug2 initialized </br>
->Mugs(int) </br>
->new Mugs(1) completed </br>
->>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
 
  Такой синтаксис необходим для поддержки инициализации анонимных внутренних классов, но он также гарантирует, что некоторые операции будут выполнены независимо от того, какой именно конструктор был вызван в программе. Секция инициализации экземпляра выполняется раньше любых конструкторов.
@@ -612,17 +587,12 @@
 	} 
 **Output:** (Sample)
 
-<<<<<<< HEAD
 >47 3.14 11.11 
 
 >one two three 
 
 >A@1a46e30 A@3e25a5 A@19821f 
-=======
->47 3.14 11.11 </br>
->one two three </br>
->A@1a46e30 A@3e25a5 A@19821f </br>
->>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
+
 
  Print() принимает массив объектов типа Object, перебирает его элементы и выводит их.
 
@@ -654,7 +624,7 @@
 	} 
 
 **Output: (75% match)**
-<<<<<<< HEAD
+
 >47 3.14 11.11 
 
 >47 3.14 11.11 
@@ -663,13 +633,6 @@
 
 >A@1bab50a A@c3c749 A@150bd4d 
 
-=======
->47 3.14 11.11 </br>
->47 3.14 11.11 </br>
->one two three </br>
->A@1bab50a A@c3c749 A@150bd4d </br>
->>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
->1 2 3 4
 
  Списки аргументов переменной длины избавляют от необходимости явной записи синтаксиса массивов – компилятор делает это автоматически.
 
@@ -695,17 +658,12 @@
 	} 
 
 **Output:**
-<<<<<<< HEAD
+
 >required: 1 one
 
 >required: 2 two three
 
 >required: 0 
-=======
->required: 1 one </br>
->required: 2 two three </br>
->required: 0 </br>
->>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
 
  Следующий пример показывает, что список аргументов переменной длины превращается в массив, а при отсутствии элементов он становится массивом нулевой длины.
@@ -980,7 +938,7 @@
 	  }
 	} 
 **Output:**
-<<<<<<< HEAD
+
 >Inside Bath()
 
 >Soap()
@@ -998,17 +956,6 @@
 >toy = 3.14 
 
 >castille = Constructed 
-=======
->Inside Bath() </br>
->Soap() </br>
->s1 = Happy </br>
->s2 = Happy </br>
->s3 = Joy </br>
->s4 = Joy </br>
->i = 47 </br>
->toy = 3.14 </br>
->castille = Constructed </br>
->>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
 
 
 ###Синтаксис наследования
@@ -1071,7 +1018,7 @@
 	} 
 
 **Output:**
-<<<<<<< HEAD
+
 >Cleanser dilute() apply() Detergent.scrub() scrub() foam() 
 
 >Testing base class: 
@@ -2010,16 +1957,481 @@
 
  В этой точке все необходимые классы уже загружены и можно переходить к созданию объекта класса. Сначала всем примитивам данного объекта присваиваются значения по-умолчанию, а ссылкам на объекты задается null - делается это за один подход посредством обнуления памяти. Затем вызывается конструктор базового класса (Автоматически или через super). После завершения работы конструктора базового класса инициализируются переменные, в порядке их определения. Наконец, выполняется оставшееся тело конструктора.
 
-##Полиморфизм
+##8 глава. Полиморфизм
 
+ Полиморфизм также называют динамическим связыванием, или поздним связыванием, или связывание во время выполнения.
+ 
+ Полиморфизм предоставляет еще одну степень отделения интерфейса от реализации, разъединения *что* от *как*. Полиморфизм улучшает организацию кода и его читаемость, а также способствует созданию расширяемых программ, которые могут "расти" не только в процессе начальной разработки проекта, но и при добавлении новых возможностей.
 
+ Вызов полиморфного метода позволяет одному типу выразить свое отличие от другого, сходного типа, хотя они и происходят от одного базового типа. Это отличие выражается различным действием методов, вызываемых через базовый класс.
 
+###Снова о восходящем преобразовании
 
-=======
->Cleanser dilute() apply() Detergent.scrub() scrub() foam() </br>
->Testing base class: </br>
->Cleanser dilute() apply() scrub() </br>
->>>>>>> 6f8ae3a00f3a69d320a1798a9665569a878685bf
+ Интерпретация ссылки на объект как ссылки на базовый тип называется *восходящим преобразованием*.
 
+###Связывание "метод-вызов"
 
+ Присоединение вызова метода к телу метода называется *связыванием* (binding). Если связывание проводится перед запуском программы (компилятором и компоновщиком, если он есть), оно называется *ранним свзяыванием* (early binding). 
 
+ *Позднее связывание* (late binding) - связывание, проводимое во время выполнения программы, в зависимости от типа объекта. Позднее связывание также называют *динамическим* (dynamic) или *связыванием на стадии выполнения* (runtime binding). 
+
+ В языках, реализующих позднее связывание, должен существовать механизм определения фактического типа объекта во время работы программы для вызова подходящего метода. Иначе говоря, компилятор не знает  типа объекта, но механизм вызова методов определяет его и вызывает соответствующее тело метода.
+
+ Для всех методов Java используется механизм позднего связывания, если только метод не был объявлен как final (приватные методы являются final по умолчанию).
+ Следовательно, вам не придется принимать решений относительно использования позднего связывания - оно осуществляется автоматически.
+
+ Объявления метода как final, не только запрещает переопределение этого метода, но также "отключает" позднее связывание, поэтому для методов final компилятор генерирует чуть более эффективный код. Впрочем, в большинстве случаев влияние на производительность программы незначительно.
+
+###Получение нужного результата
+
+ Связывание всех методов в Java осуществляется полиморфно, через позднее связывание. Код базового класса будет работать верно для всех производных классов.
+
+ Классический пример полиморфизма:
+
+ <img src="data:image/png;base64,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"/>
+
+ Восходящее преобразование имеет место даже в такой простой команде:
+
+ 	Shape s  = new Circle();
+
+ Здесь создается объект Circle, и полученная ссылка немедленно присваивается типу Shape. На первый взгляд это может показаться ошибкой (присвоение одного типа другому), но в действительности все правильно, потому что тип Circle (окружность) является типом Shape (фигура) посредством наследования. 
+
+ Предположим, вызывается один из методов базового класса (из тех, что были переопределены в производных классах):
+
+ 	s.draw();
+
+ Опять можно подумать, что вызывается метод draw() из класса Shape, раз имеется ссылка на объект Shape - как компилятор может сделать что-то другое? И все же будет вызван правильный метод `Circle.draw()`, так как в программе используется позднее связывание (полиморфизм).
+
+ Следующий пример показывает несколько другой подход:
+
+	//: polymorphism/shape/Shape.java
+	package polymorphism.shape;
+	
+	public class Shape {
+	  public void draw() {}
+	  public void erase() {}
+	} 
+
+	//: polymorphism/shape/Circle.java
+	package polymorphism.shape;
+	import static net.mindview.util.Print.*;
+	
+	public class Circle extends Shape {
+	  public void draw() { print("Circle.draw()"); }
+	  public void erase() { print("Circle.erase()"); }
+	}
+
+	//: polymorphism/shape/Square.java
+	package polymorphism.shape;
+	import static net.mindview.util.Print.*;
+	
+	public class Square extends Shape {
+	  public void draw() { print("Square.draw()"); }
+	  public void erase() { print("Square.erase()"); }
+	}
+
+	//: polymorphism/shape/Triangle.java
+	package polymorphism.shape;
+	import static net.mindview.util.Print.*;
+	
+	public class Triangle extends Shape {
+	  public void draw() { print("Triangle.draw()"); }
+	  public void erase() { print("Triangle.erase()"); }
+	}
+
+	//: polymorphism/shape/RandomShapeGenerator.java
+	// A "factory" that randomly creates shapes.
+	package polymorphism.shape;
+	import java.util.*;
+	
+	public class RandomShapeGenerator {
+	  private Random rand = new Random(47);
+	  public Shape next() {
+	    switch(rand.nextInt(3)) {
+	      default:
+	      case 0: return new Circle();
+	      case 1: return new Square();
+	      case 2: return new Triangle();
+	    }
+	  }
+	}
+
+	//: polymorphism/Shapes.java
+	// Polymorphism in Java.
+	import polymorphism.shape.*;
+	
+	public class Shapes {
+	  private static RandomShapeGenerator gen =
+	    new RandomShapeGenerator();
+	  public static void main(String[] args) {
+	    Shape[] s = new Shape[9];
+	    // Fill up the array with shapes:
+	    for(int i = 0; i < s.length; i++)
+	      s[i] = gen.next();
+	    // Make polymorphic method calls:
+	    for(Shape shp : s)
+	      shp.draw();
+	  }
+	}
+
+**Output:**
+>Triangle.draw()
+
+>Triangle.draw()
+
+>Square.draw()
+
+>Triangle.draw()
+
+>Square.draw()
+
+>Triangle.draw()
+
+>Square.draw()
+
+>Triangle.draw()
+
+>Circle.draw()
+
+ Базовый класс Shape устанавливает общий интерфейс для всех классов, производных от Shape, - то есть любую фигуру можно нарисовать (draw()) и стереть (erase()). Производные классы переопределяют этот интерфейс, чтобы реализовать уникальное поведение для каждой конкретной фигуры.
+ 
+ RandomShapeGenerator - своего рода "фабрика". Восходящее преобразование выполняется в командах return. 
+
+###Расширяемость
+
+ В хорошо спроектированной ООП-программе большая часть методов оперируют только с интерфейсом базового класса. Такая программа является расширяемой, поскольку в нее можно добавить дополнительную функциональность, определяя новые типы данных от общего базового класса. Методы, работающие на уровне интерфейса базового класса, совсем не нужно изменять, чтобы приспособить их к новым классам.
+
+###Проблема: "переопределение" закрытых методов
+
+ Перед вами одна из ошибок, совершаемых по наивности:
+	
+	//: polymorphism/PrivateOverride.java
+	// Trying to override a private method.
+	package polymorphism;
+	import static net.mindview.util.Print.*;
+	
+	public class PrivateOverride {
+	  private void f() { print("private f()"); }
+	  public static void main(String[] args) {
+	    PrivateOverride po = new Derived();
+	    po.f();
+	  }
+	}
+	
+	class Derived extends PrivateOverride {
+	  public void f() { print("public f()"); }
+	} 
+
+**Output:**
+
+>private f()
+
+ Вполне естественно было бы ожидать, что программа выведет сообщение public f(), но закрытый метод автоматически является неизменным (final), а заодно и скрытым от производного класса. Так что метод f() класса Derived в нашем случае является полностью новым - он даже не был перегружен, так как метод f() базового класса классу Derived недоступен.
+
+ Из этого можно сделать вывод, что переопределяются только методы, не являющиеся закрытыми. Будьте внимательны: компилятор в подобных ситуациях не выдает сообщений об ошибке, но и не делает того, что вы от него ожидаете. Иными словами, методам производного класса следует присваивать имена, отличные от имен закрытых методов базового класса.
+
+###Проблема: поля и статические методы
+
+ После первого знакомства с полиморфизмом создается впечатление, что все обращения в программе осуществляются полиморфно. Тем не менее полиморфизм поддерживается только для обычных вызовов методов. Например, прямое обращение к полю будет обработано на стадии компиляции:
+
+	//: polymorphism/FieldAccess.java
+	// Direct field access is determined at compile time.
+	
+	class Super {
+	  public int field = 0;
+	  public int getField() { return field; }
+	}
+	
+	class Sub extends Super {
+	  public int field = 1;
+	  public int getField() { return field; }
+	  public int getSuperField() { return super.field; }
+	}
+	
+	public class FieldAccess {
+	  public static void main(String[] args) {
+	    Super sup = new Sub(); // Upcast
+	    System.out.println("sup.field = " + sup.field +
+	      ", sup.getField() = " + sup.getField());
+	    Sub sub = new Sub();
+	    System.out.println("sub.field = " +
+	      sub.field + ", sub.getField() = " +
+	      sub.getField() +
+	      ", sub.getSuperField() = " +
+	      sub.getSuperField());
+	  }
+	}
+
+**Output:**
+>sup.field = 0, sup.getField() = 1
+
+>sub.field = 1, sub.getField() = 1, sub.getSuperField() = 0
+
+ При восходящем преобразовании объекта Sub в ссылку на Super все обращения к полям разрешаются компилятором, и это поведение не является полиморфным. В этом примере для `Super.field` и `Sub.field` выделяются разные области памяти. Таким образом, Sub фактически содержит два поля с именем field: собственное и унаследованное от Super. При этом версия Super не используется по умолчанию при обращении к полю в Sub, чтобы получить доступ к полю из Super, необходимо использовать явную запись super.field.
+
+ Впрочем, эта проблема почти никогда не возникает на практике. Во-первых, обычно все поля объявляются закрытыми, а обращения к ним осуществляются не напрямую, а только в виде побочного эффекта от вызова методов. Кроме этого, использовать одно имя для поля базового и производного класса вообще не рекомендуется, потому что это создает путаницу.
+
+ Статические методы не поддерживают полиморфного поведения:
+
+	//: polymorphism/StaticPolymorphism.java
+	// Static methods are not polymorphic.
+	
+	class StaticSuper {
+	  public static String staticGet() {
+	    return "Base staticGet()";
+	  }
+	  public String dynamicGet() {
+	    return "Base dynamicGet()";
+	  }
+	}
+	
+	class StaticSub extends StaticSuper {
+	  public static String staticGet() {
+	    return "Derived staticGet()";
+	  }
+	  public String dynamicGet() {
+	    return "Derived dynamicGet()";
+	  }
+	}
+	
+	public class StaticPolymorphism {
+	  public static void main(String[] args) {
+	    StaticSuper sup = new StaticSub(); // Upcast
+	    System.out.println(sup.staticGet());
+	    System.out.println(sup.dynamicGet());
+	  }
+	} 
+
+**Output:**
+
+>Base staticGet()
+
+>Derived dynamicGet()
+
+ Статические методы существуют на уровне класса, а не на уровне отдельных объектов.
+
+###Конструкторы и полиморфизм
+
+ Конструкторы сами по себе не полиморфны (фактически они являются статическими методами, только ключевое слово static опущено).
+
+###Порядок вызова конструкторов
+
+ Конструктор базового класса всегда вызывается в процессе конструирования производного класса. Вызов автоматически проходит вверх по цепочке наследования, так что в конечном итоге вызываются конструкторы всех базовых классов по всей цепочке наследования. 
+
+ Производный класс обычно имеет доступ только к своим членам, но не к членам базового класса (которые чаще всего private). Только конструктор базового класса обладает необходимыми знаниями и правами доступа, чтобы правильно инициализировать свои внутренние элементы. Именно поэтому компилятор настаивает на вызове конструктора для любой части производного класса. Он незаметно подставит конструктор по умолчанию, если вы явно не вызовете конструктор базового класса в теле конструктора производного класса. Если конструктора по умолчанию не существует, компилятор сообщит об этом. (Если у класса вообще нет пользовательских конструкторов, компилятор автоматически генерирует конструктор по умолчанию.)
+
+ Следующий пример показывает, как композиция, наследование и полиморфизм влияют на порядок конструирования:
+
+	//: polymorphism/Sandwich.java
+	// Order of constructor calls.
+	package polymorphism;
+	import static net.mindview.util.Print.*;
+	
+	class Meal {
+	  Meal() { print("Meal()"); }
+	}
+	
+	class Bread {
+	  Bread() { print("Bread()"); }
+	}
+	
+	class Cheese {
+	  Cheese() { print("Cheese()"); }
+	}
+	
+	class Lettuce {
+	  Lettuce() { print("Lettuce()"); }
+	}
+	
+	class Lunch extends Meal {
+	  Lunch() { print("Lunch()"); }
+	}
+	
+	class PortableLunch extends Lunch {
+	  PortableLunch() { print("PortableLunch()");}
+	}
+	
+	public class Sandwich extends PortableLunch {
+	  private Bread b = new Bread();
+	  private Cheese c = new Cheese();
+	  private Lettuce l = new Lettuce();
+	  public Sandwich() { print("Sandwich()"); }
+	  public static void main(String[] args) {
+	    new Sandwich();
+	  }
+	}
+
+**Output:**
+
+>Meal()
+
+>Lunch()
+
+>PortableLunch()
+
+>Bread()
+
+>Cheese()
+
+>Lettuce()
+
+>Sandwich()
+
+ Конструкторы для сложного объекта вызываются в такой последовательности:
+
+ - Сначала вызывается конструктор базового класса. Этот шаг повторяется рекурсивно: сначала конструируется корень иерархии, затем следующий за ним класс и т.д., пока не достигается "низший" производный класс.
+ - Проводится инициализация членов класса в порядке их объявления.
+ - Вызывается тело конструктора производного класса.
+
+###Поведение полиморфных методов при вызове из конструкторов
+
+ В иерархиях конструкторов возникает интересный вопрос. Что произойдет, если вызвать в конструкторе динамически связываемый метод конструируемого объекта?
+
+ В обычных методах представить происходящее нетрудно - динамически связываемый вызов обрабатывается во время выполнения, так как объект не знает, принадлежит ли этот вызов классу, в котором определен метод, или классу, производному от этого класса. Казалось бы, то же самое должно происходить и в конструкторах.
+
+ Но ничего подобного. При вызове динамически связываемого метода в конструкторе используется переопределенное описание этого метода. Однако последствия такого вызова могут быть весьма неожиданными, и здесь могут крыться некоторые коварные  ошибки.
+
+ По определению задача конструктора - дать объекту жизнь. Внутри любого конструктора объект может быть сформирован лишь частично - известно лишь то, что объекты базового класса были проинициализированы.
+
+ Если конструктор является лишь очередным шагом на пути построения объекта класса, производного от класса данного конструктора, "производные" части еще не были инициализированы на момент вызова текущего конструктора. Однако динамически связываемый вызов может перейти во "внешнюю" часть иерархии, то есть к производным классам. Если он вызовет метод производного класса в конструкторе, это может привести к манипуляциям с неинициализированными данными, а это наверняка приведет к катастрофе.
+
+ Пример поясняющий суть проблемы:
+	
+	//: polymorphism/PolyConstructors.java
+	// Constructors and polymorphism
+	// don't produce what you might expect.
+	import static net.mindview.util.Print.*;
+	
+	class Glyph {
+	  void draw() { print("Glyph.draw()"); }
+	  Glyph() {
+	    print("Glyph() before draw()");
+	    draw();
+	    print("Glyph() after draw()");
+	  }
+	}	
+	
+	class RoundGlyph extends Glyph {
+	  private int radius = 1;
+	  RoundGlyph(int r) {
+	    radius = r;
+	    print("RoundGlyph.RoundGlyph(), radius = " + radius);
+	  }
+	  void draw() {
+	    print("RoundGlyph.draw(), radius = " + radius);
+	  }
+	}	
+	
+	public class PolyConstructors {
+	  public static void main(String[] args) {
+	    new RoundGlyph(5);
+	  }
+	}
+
+**Output:**
+
+>Glyph() before draw()
+
+>RoundGlyph.draw(), radius = 0
+
+>Glyph() after draw()
+
+>RoundGlyph.RoundGlyph(), radius = 5
+
+ Метод `Glyph.draw()` изначально предназначен для переопределения в производных классах, что и происходит в RoundGlyph. Но конструктор Glyph вызывает этот метод, и в результате это приводит к вызову метода `RoundGlyph.draw()`, что вроде бы и предполагалось. Но из результатов работы программы видно - когда конструктор класса Glyph вызывает метод `draw()`, переменной radius еще не присвоено даже значение по умолчанию 1. Переменная равна 0. В итоге класс может не выполнить свою задачу.
+
+ Порядок инициализации, описанный ранее немного неполно. На самом деле процесс инициализации проходит следующим образом:
+
+ - Память, выделанная под новый объект, заполняется двоичными нулями.
+ - Конструкторы базовых классов вызываются в описанном ранее порядке. В этот момент вызывается переопределенный метод draw() (перед вызовом конструктора класса RoundGlyph), где обнаруживается, что переменная radius равна 0 из-за первого этапа.
+ - Вызываются инициализатор членов класса в порядке их определения.
+ - Исполняется тело конструктора производного класса.
+ 
+ При написании конструктора стоит руководствоваться следующим принципом: "Не пытайтесь сделать больше для того, чтобы привести объект в нужное состояние, и по возможности избегайте вызова каких-либо методов". Единственные методы, которые можно вызывать в конструкторе без опаски, - неизменные (final) методы базового класса. (Сказанное относится и закрытым (private) методам, поскольку они автоматически являются неизменными.) Такие методы невозможны переопределить, поэтому они и застрахованы от "сюрпризов".
+
+###Ковариантность возвращаемых типов
+
+ В Java SE5 появилась концепция *ковариантности возвращаемых типов*, это означает, что переопределенный метод производного класса может вернуть тип, производный от типа, возвращаемого методом базового класса:
+
+	//: polymorphism/CovariantReturn.java
+	
+	class Grain {
+	  public String toString() { return "Grain"; }
+	}
+	
+	class Wheat extends Grain {
+	  public String toString() { return "Wheat"; }
+	}
+	
+	class Mill {
+	  Grain process() { return new Grain(); }
+	}
+	
+	class WheatMill extends Mill {
+	  Wheat process() { return new Wheat(); }
+	}
+	
+	public class CovariantReturn {
+	  public static void main(String[] args) {
+	    Mill m = new Mill();
+	    Grain g = m.process();
+	    System.out.println(g);
+	    m = new WheatMill();
+	    g = m.process();
+	    System.out.println(g);
+	  }
+	}
+
+**Output:**
+
+>Grain
+
+>Wheat
+
+###Наследование при проектировании
+
+ Полиморфизм, также как и наследование, не стоит применять всегда и везде. Для начала лучше использовать композицию. Механизм композиции более гибок, так как он позволяет динамически выбирать тип (а следовательно, и поведение), тогда как наследование требует, чтобы точный тип был уже известен во время компиляции.
+
+ Пример:
+
+	//: polymorphism/Transmogrify.java
+	// Dynamically changing the behavior of an object
+	// via composition (the "State" design pattern).
+	import static net.mindview.util.Print.*;
+	
+	class Actor {
+	  public void act() {}
+	}
+	
+	class HappyActor extends Actor {
+	  public void act() { print("HappyActor"); }
+	}
+	
+	class SadActor extends Actor {
+	  public void act() { print("SadActor"); }
+	}
+	
+	class Stage {
+	  private Actor actor = new HappyActor();
+	  public void change() { actor = new SadActor(); }
+	  public void performPlay() { actor.act(); }
+	}
+	
+	public class Transmogrify {
+	  public static void main(String[] args) {
+	    Stage stage = new Stage();
+	    stage.performPlay();
+	    stage.change();
+	    stage.performPlay();
+	  }
+	}
+
+**Output:**
+
+>HappyActor
+
+>SadActor
+ 
+ Переключиться на другой способ наследования во время работы программы невозможно. Иерархия наследования раз и навсегда определяется в процессе компиляции программы.
+
+###Нисходящее преобразование и динамическое определение типов
