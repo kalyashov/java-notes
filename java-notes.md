@@ -2592,3 +2592,241 @@
  В данных HashSet не прослеживает никакого видимого порядка. Это объясняется тем, что HashSet для скорости использует хеширование. Порядок, поддерживаемый HashSet, отличается от порядка TreeSet или LinkedHashSet, так как каждая реализация использует свой механизм хранения элементов. TreeSet хранит элементы отсортированными в специальной структуре данных - красно-черном дереве, тогда как HashSet применяет хеширование. LinkedHashSet также использует хеширование для повышения скорости поиска по ключи, но выглядит все так, словно элементы сохраняются в связанном списке в порядке вставки. 
 
  Если нужно, чтобы данные были отсортированы, то стоит использовать TreeSet.
+
+ Одной из самых частых операций, выполняемых с множествами, является проверка присутствия значений методом *contains().*
+
+###Map
+
+  Ассоциативный массив. Пример:
+
+	//: holding/Statistics.java
+	// Simple demonstration of HashMap.
+	import java.util.*;
+	
+	public class Statistics {
+	  public static void main(String[] args) {
+	    Random rand = new Random(47);
+	    Map<Integer,Integer> m =
+	      new HashMap<Integer,Integer>();
+	    for(int i = 0; i < 10000; i++) {
+	      // Produce a number between 0 and 20:
+	      int r = rand.nextInt(20);
+	      Integer freq = m.get(r);
+	      m.put(r, freq == null ? 1 : freq + 1);
+	    }
+	    System.out.println(m);
+	  }
+	} 
+**Output:**
+>{15=497, 4=481, 19=464, 8=468, 11=531, 16=533, 18=478, 3=508, 7=471, 12=521, 17=509, 2=489, 13=506, 9=549, 6=519, 1=502, 14=477, 10=513, 5=503, 0=481}
+
+###Очередь
+
+ *Очередь*(queue) - это контейнер, работающий по принципу "первый вошел, первый вышел"(FIFO). 
+ 
+ Очереди играют важные роль в параллельном программировании (21 глава), так как они обеспечивают безопасную передачу объектов между задачами.
+
+ Класс LinkedList содержит несколько методов для поддержки поведения очередей и реализует интерфейс Queue.
+
+	//: holding/QueueDemo.java
+	// Upcasting to a Queue from a LinkedList.
+	import java.util.*;
+	
+	public class QueueDemo {
+	  public static void printQ(Queue queue) {
+	    while(queue.peek() != null)
+	      System.out.print(queue.remove() + " ");
+	    System.out.println();
+	  }
+	  public static void main(String[] args) {
+	    Queue<Integer> queue = new LinkedList<Integer>();
+	    Random rand = new Random(47);
+	    for(int i = 0; i < 10; i++)
+	      queue.offer(rand.nextInt(i + 10));
+	    printQ(queue);
+	    Queue<Character> qc = new LinkedList<Character>();
+	    for(char c : "Brontosaurus".toCharArray())
+	      qc.offer(c);
+	    printQ(qc);
+	  }
+	} 
+
+**Output:**
+>8 1 1 1 5 14 3 1 0 1
+
+>B r o n t o s a u r u s
+
+
+ - *offer()* вставляет элемент в конец очереди или возвращает false.
+ - *peek()* и *element()* возвращают элемент  в начале очереди *без его   извлечения*, но *peek()* возвращает null для пустой очереди, а *element()* 
+ выдает исключения NoSuchElementException.
+ - *poll()* и *remove()* извлекают и возвращают элемент в начале очереди, но *poll()* возвращает null для пустой очереди, а *remove()* выдает NoSuchElementException.
+
+###PriorityQueue
+
+ Согласно принципу FIFO, следующим должен извлекаться элемент, который дольше всех ожидает в очереди.
+
+ В приоритетной очереди PriorityQueue следующим извлекается элемент, обладающий наивысшим приоритетом. 
+
+ При вызове offer() для объекта, помещаемого в PriorityQueue, позиция этого объекта в очереди определяется сортировкой *(хотя это зависит от реализации, алгоритмы приоритетных очередей обычно выполняют сортировку при вставке).* 
+
+ Сортировка по умолчанию использует естественный порядок следования объектов в очереди, но есть возможность изменить его, предоставив собственную реализацию Comparator.PriorityQueue гарантирует, то при вызове peek(), poll() или remove() будет получен элемент с наивысшим приоритетом.  
+
+ По умолчанию получается так, что наименьшие значения обладают наивысшим приоритетом (в случае String пробелы также считаются значениями, которые обладают более высоким приоритетом, чем буквы). 
+
+ Пример:
+
+	//: holding/PriorityQueueDemo.java
+	import java.util.*;
+	
+	public class PriorityQueueDemo {
+	  public static void main(String[] args) {
+	    PriorityQueue<Integer> priorityQueue =
+	      new PriorityQueue<Integer>();
+	    Random rand = new Random(47);
+	    for(int i = 0; i < 10; i++)
+	      priorityQueue.offer(rand.nextInt(i + 10));
+	    QueueDemo.printQ(priorityQueue);
+	
+	    List<Integer> ints = Arrays.asList(25, 22, 20,
+	      18, 14, 9, 3, 1, 1, 2, 3, 9, 14, 18, 21, 23, 25);
+	    priorityQueue = new PriorityQueue<Integer>(ints);
+	    QueueDemo.printQ(priorityQueue);
+	    priorityQueue = new PriorityQueue<Integer>(
+	        ints.size(), Collections.reverseOrder());
+	    priorityQueue.addAll(ints);
+	    QueueDemo.printQ(priorityQueue);
+	
+	    String fact = "EDUCATION SHOULD ESCHEW OBFUSCATION";
+	    List<String> strings = Arrays.asList(fact.split(""));
+	    PriorityQueue<String> stringPQ =
+	      new PriorityQueue<String>(strings);
+	    QueueDemo.printQ(stringPQ);
+	    stringPQ = new PriorityQueue<String>(
+	      strings.size(), Collections.reverseOrder());
+	    stringPQ.addAll(strings);
+	    QueueDemo.printQ(stringPQ);
+	
+	    Set<Character> charSet = new HashSet<Character>();
+	    for(char c : fact.toCharArray())
+	      charSet.add(c); // Autoboxing
+	    PriorityQueue<Character> characterPQ =
+	      new PriorityQueue<Character>(charSet);
+	    QueueDemo.printQ(characterPQ);
+	  }
+	} 
+
+**Output:**
+>0 1 1 1 1 1 3 5 8 14
+
+>1 1 2 3 3 9 9 14 14 18 18 20 21 22 23 25 25
+
+>25 25 23 22 21 20 18 18 14 14 9 9 3 3 2 1 1
+
+>       A A B C C C D D E E E F H H I I L N N O O O O S S S T T U U U W
+
+>W U U U T T S S S O O O O N N L I I H H F E E E D D C C C B A A
+
+>  A B C D E F H I L N O S T U W
+
+ Типы Integer, String и Character работают с PriorityQueue, потому что для этих классов существует естественный встроенный порядок. Если нужно использовать собственный класс с PriorityQueue, то придется включить дополнительную функциональность для введения естественного порядка или передать собственный объект Comparator.
+
+###Collection и Iterator
+
+ Collection - корневой интерфейс, описывающий общие аспекты всех последовательных контейнеров. Класс AbstractCollection предоставляет реализацию Collection по умолчанию.
+
+ **Код, написанный для интерфейса, а не для реализации, может применяться к большему количеству объектов.**
+ 
+ Получение Iterator обеспечивает связывание последовательности с методом, работающим с этой последовательностью, при минимальном уровне логических привязок и накладывает гораздо меньше ограничений на класс последовательности, чем реализация Collection.
+
+###Foreach и итераторы
+
+ Синтаксис foreach работает для любого объекта Collection. 
+
+ В Java SE появился новый интерфейс Iterable, который содержит метод iterator() для получения объекта Iterator; именно интерфейс Iterable используется foreach для перемещения по последовательности. Таким образом, если создать любой класс, реализующий Iterable, его можно будет использовать в команде foreach:
+
+	//: holding/IterableClass.java
+	// Anything Iterable works with foreach.
+	import java.util.*;
+	
+	public class IterableClass implements Iterable<String> {
+	  protected String[] words = ("And that is how " +
+	    "we know the Earth to be banana-shaped.").split(" ");
+	  public Iterator<String> iterator() {
+	    return new Iterator<String>() {
+	      private int index = 0;
+	      public boolean hasNext() {
+	        return index < words.length;
+	      }
+	      public String next() { return words[index++]; }
+	      public void remove() { // Not implemented
+	        throw new UnsupportedOperationException();
+	      }
+	    };
+	  }	
+	  public static void main(String[] args) {
+	    for(String s : new IterableClass())
+	      System.out.print(s + " ");
+	  }
+	} 
+**Output:**
+>And that is how we know the Earth to be banana-shaped.
+
+ Метод iterator() возвращает экземпляр анонимной внутренней реализации Iterator<String>, которая выдает каждое слово в массиве. В методе main() IterableClass  работает в синтаксисе foreach.
+
+ В Java SE5 Iterable реализуется многими классами, прежде всего всеми реализациями Collection (но не Map).
+
+###Идиома "Метод-Адаптер"
+
+ А если имеется существующий класс, который реализует Iterable, и вы хотите добавить новые способы использования этого класса в команде foreach? Предположим, что нужно иметь возможность выбора между перебором списка слов в прямом или обратном направлении. Если просто создать производный класс и переопределить метод iterator(), то вы замените существующий метод, и выбора не будет.
+
+ Одно из решений основано на идиоме "Метод-Адаптер"(от автора). "Адаптер" в названии происходит от паттернов проектирования, потому что для команды foreach необходимо предоставить конкретный интерфейс. Если имеется один интерфейс, а нужен другой проблема решается написанием адаптера:
+
+	//: holding/AdapterMethodIdiom.java
+	// The "Adapter Method" idiom allows you to use foreach
+	// with additional kinds of Iterables.
+	import java.util.*;
+	
+	class ReversibleArrayList<T> extends ArrayList<T> {
+	  public ReversibleArrayList(Collection<T> c) { super(c); }
+	  public Iterable<T> reversed() {
+	    return new Iterable<T>() {
+	      public Iterator<T> iterator() {
+	        return new Iterator<T>() {
+	          int current = size() - 1;
+	          public boolean hasNext() { return current > -1; }
+	          public T next() { return get(current--); }
+	          public void remove() { // Not implemented
+	            throw new UnsupportedOperationException();
+	          }
+	        };
+	      }
+	    };
+	  }
+	}	
+	
+	public class AdapterMethodIdiom {
+	  public static void main(String[] args) {
+	    ReversibleArrayList<String> ral =
+	      new ReversibleArrayList<String>(
+	        Arrays.asList("To be or not to be".split(" ")));
+	    // Grabs the ordinary iterator via iterator():
+	    for(String s : ral)
+	      System.out.print(s + " ");
+	    System.out.println();
+	    // Hand it the Iterable of your choice
+	    for(String s : ral.reversed())
+	      System.out.print(s + " ");
+	  }
+	}
+
+**Output:**
+>To be or not to be
+
+>be to not or be To
+
+ Если просто поместить объект ral в команду foreach, то вы получите прямой итератор (по умолчанию). Но если вызвать для объекта метод reversed(), он обеспечит другое поведение.
+
+###Резюме
+
+ В контейнерах нельзя хранить примитивы, только ссылки на объекты, автоматическая упаковка преобразует каждое сгенерированное число в класс-"обертку" Integer, чтобы его можно было использовать в контейнере.
