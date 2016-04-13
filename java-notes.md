@@ -2830,3 +2830,78 @@
 ###Резюме
 
  В контейнерах нельзя хранить примитивы, только ссылки на объекты, автоматическая упаковка преобразует каждое сгенерированное число в класс-"обертку" Integer, чтобы его можно было использовать в контейнере.
+
+ В Java предусмотрены следующие способы хранения объектов:
+
+ 1. Массив ассоциирует с объектом числовой индекс. Он содержи объекты известного типа, так что при поиске объекта нет необходимости проводить преобразование. Он может иметь несколько измерений и способен хранить примитивы, но после создания его размер изменить невозможно.
+ 2. Коллекция (Collection) заполняется одиночными элементами, в то время как карта (Map) хранит пары "ключ-значение". При использовании обобщенных типов указывается тип объекта, хранимого в контейнере, так что поместить объект неправильно типа не удастся, а с извлекаемыми объектами не нужно выполнять преобразование типа. И Collection, и Map автоматически изменяют свои размеры с добавления новых элементов. Контейнер не может хранить примитивы, но механизм автоматической упаковки обеспечит необходимые преобразования к типам-"оберткам", хранимым в контейнере.
+ 3. Список (List) также ассоциирует с объектами числовые индексы - массивы и списки можно представить себе как упорядоченный контейнеры.
+ 4. Используйте ArrayList, если имеется необходимость частого получения произвольных элементов, или LinkedList, если будет производиться множество вставок и удалений элементов в середине списка.
+ 5. Возможности очередей и стеков предоставляет класс LinkedList.
+ 6. Map позволяет ассоциировать с объектами не только числа, но и объекты с другими объектами. HashMap разработан для быстрого доступа к элементам, в то время как TreeMap хранит набор ключей в отсортированном виде и поэтому уступает по скорости HashMap. LinkedHashMap упорядочивает свои элементы в порядке добавления, но обеспечивает быстрый доступ к элементам благодаря хешированию.
+ 7. Set позволяет хранить не более одного экземпляра определенного объекта. Множество HashSet предназначено для максимально ускоренного поиска, в то время как множество TreeSet хранит элементы отсортированными. Элементы множества LinkedHashSet хранятся в порядке добавления.
+ 8. При написании новых программ нет никакой необходимости использовать устаревшие классы Vector, Hashtable и Stack.
+ 
+ Упрощенная диаграмма:
+
+
+ <img src="data:image/png;base64,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"/>
+
+
+#12 глава. Обработка ошибок и исключений.
+
+ Слово "исключение" следует воспринимать в смысле "возникла исключительная ситуация". 
+
+ Возможно, в точке возникновения проблемы вы еще не представляете, что же с ней делать, но точно знаете, что уже не можете просто игнорировать и продолжить выполнение; необходимо остановиться, чтобы кто-то где-то предпринял все полагающиеся действия. Но в текущем контексте вы не располагаете всей нужной информацией для преодоления проблемы. Тогда вы направляете свой вопрос на уровень выше, где "квалификация" достаточна, чтобы принять верное решение.
+
+ Другое важное преимущество использования механизма исключений состоит в том, что они значительно упрощают создание частей программы, отвечающих за обработку ошибок. Исключения гарантируют, что кто-то обработает их. Проблемы можно решить в одном месте, так называемом *обработчике исключения* (exception handler).
+ 
+###Основные исключения
+
+ *Исключительная ситуация* возникает, когда невозможно нормальное продолжение работы метода или части программы, выполняющихся в данный момент. 
+
+ Важно отличать исключительную ситуацию от обычной ошибки, когда текущая обстановка позволяет решить возникшее затруднение. В случае исключительной ситуации вы не можете продолжить работу программы, так как вам не хватит информации для разрешения исключения в *текущем контексте*. Все, что вам остается, - это покинуть текущий контекст и передать задачу на более высокий уровень. Именно это и происходит, когда вы возбуждаете исключение.
+
+ Когда вы возбуждаете исключение, то происходит сразу несколько вещей. Во-первых создается объект, представляющий исключение, - точно так же, как и любой другой объект в Java: в куче, оператором new. Далее текущий поток исполнения (тот самый, где произошла ошибка) останавливается и ссылка на объект, представляющий исключение, извлекается из текущего контекста. С этого момента включается механизм обработки исключений, который начинает поиск подходящего для продолжения исполнения места в программе. Этим местом является *обработчик исключений*, который пытается решить возникшую проблему так, чтобы предпринять другую попытку выполнения задачи или просто продолжить.
+
+ 	if(t == null)
+ 		throw new NullPointerException();
+
+ Исключения позволяют рассматривать все происходящее в программе как транзакции("...Транзакция - компьютерный аналог договорного права. Если что-то идет не так, мы просто отменяем все вычисление".)
+ 
+ Исключения позволяют заставить программу остановиться и сообщить о возникших проблемах или (в идеале) преодолеть последствия ошибки и вернуться в стабильное состояние.
+
+###Аргументы исключения
+
+ Исключения, как и любые другие объекты Java, создаются в куче оператором new, который выделяет память и вызывает конструктор. Существует 2 конструктора для всех стандартных исключений: конструктор по умолчанию и конструктор, который принимает в качестве аргумента строку, где можно поместить подходящую информацию об исключении:
+
+	throw new NullPointerException("t = null");
+
+ 
+ Ключевое слово throw фактически "возвращает" объект. Можно упрощенно говорить об обработке исключений как об альтернативном механизме возврата из исполняемого метода. Выдача исключений также позволяет выходить из простых областей действия. В любом случае, объект исключения возвращается, а исполнение текущего метода или области действия завершается.
+
+ Но на этом сходство с обычным возвратом из метода и заканчивается, поскольку при возврате с выдачей исключения управление передается подходящему обработчику исключений, который может находиться очень далеко - на расстоянии нескольких уровней в стеке вызова - от метода, где возникла исключительная ситуация.
+
+###Перехват исключений
+
+####Блок try
+ 
+ В блоке try перехватываются исключения, этот блок представляет собой простую область действия, введенную ключевым словом try:
+
+ 	try {
+    	// Часть программы, способная возбуждать исключения
+	}
+
+###Обработчики исключений
+
+ Обработчики исключений размещаются прямо за блоком try и вводятся ключевым словом catch.
+
+ Каждый блок catch (обработчик исключения) похож на маленький метод, принимающий один и только один аргумент определенного типа. Тип исключения дает достаточно информации для обработки исключения.
+
+ Если возбуждается исключения, механизм обработки исключений ищет первый из обработчиков исключений, аргумент которого соответствует текущему типу исключения. После этого он входит в блок catch, и таким образом исключения считается обработанным. После выполнения блока catch поиск обработчиков исключения прекращается. 
+
+ Внутри блока try могут вызываться различные методы, способные возбудить то же исключение, но обработчик понадобится всего один.
+
+####Прерывание и возобновление
+ 
+ 
