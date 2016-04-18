@@ -4628,4 +4628,387 @@ getInterface – реализуемые интерфейсы
 	  }
 	}
 
-###Анонимные внутренние классы
+###Построение сложных моделей
+
+ Следующий пример показывает, как легко строятся сложные модели с применением обобщенных типов. Несмотря на то что каждый отдельный класс создается как "строительный блок", общая модель состоит из множества частей. В данном случае моделируется магазин с рядами (Aisle), полками (Shelf) и товарами (Product):
+
+	//: generics/Store.java
+	// Building up a complex model using generic containers.
+	import java.util.*;
+	import net.mindview.util.*;
+	
+	class Product {
+	  private final int id;
+	  private String description;
+	  private double price;
+	  public Product(int IDnumber, String descr, double price){
+	    id = IDnumber;
+	    description = descr;
+	    this.price = price;
+	    System.out.println(toString());
+	  }
+	  public String toString() {
+	    return id + ": " + description + ", price: $" + price;
+	  }
+	  public void priceChange(double change) {
+	    price += change;
+	  }
+	  public static Generator<Product> generator =
+	    new Generator<Product>() {
+	      private Random rand = new Random(47);
+	      public Product next() {
+	        return new Product(rand.nextInt(1000), "Test",
+	          Math.round(rand.nextDouble() * 1000.0) + 0.99);
+	      }
+	    };
+	}
+	
+	class Shelf extends ArrayList<Product> {
+	  public Shelf(int nProducts) {
+	    Generators.fill(this, Product.generator, nProducts);
+	  }
+	}	
+	
+	class Aisle extends ArrayList<Shelf> {
+	  public Aisle(int nShelves, int nProducts) {
+	    for(int i = 0; i < nShelves; i++)
+	      add(new Shelf(nProducts));
+	  }
+	}
+	
+	class CheckoutStand {}
+	class Office {}
+	
+	public class Store extends ArrayList<Aisle> {
+	  private ArrayList<CheckoutStand> checkouts =
+	    new ArrayList<CheckoutStand>();
+	  private Office office = new Office();
+	  public Store(int nAisles, int nShelves, int nProducts) {
+	    for(int i = 0; i < nAisles; i++)
+	      add(new Aisle(nShelves, nProducts));
+	  }
+	  public String toString() {
+	    StringBuilder result = new StringBuilder();
+	    for(Aisle a : this)
+	      for(Shelf s : a)
+	        for(Product p : s) {
+	          result.append(p);
+	          result.append("\n");
+	        }
+	    return result.toString();
+	  }
+	  public static void main(String[] args) {
+	    System.out.println(new Store(14, 5, 10));
+	  }
+	}
+
+**Output:**
+>258: Test, price: $400.99
+
+>861: Test, price: $160.99
+
+>868: Test, price: $417.99
+
+>207: Test, price: $268.99
+
+>551: Test, price: $114.99
+
+>278: Test, price: $804.99
+
+>520: Test, price: $554.99
+
+>140: Test, price: $530.99
+
+###Загадка стирания
+ 
+ По мере более основательного изучения обобщений проявляются некоторые аспекты, которые на первый взгляд выглядят бессмысленно. Скажем, хотя вы можете использовать конструкцию ArrayList.class, запись ArrayList<Integer>.class недопустима:
+
+ Также рассмотрим пример:
+
+	//: generics/ErasedTypeEquivalence.java
+	import java.util.*;
+	
+	public class ErasedTypeEquivalence {
+	  public static void main(String[] args) {
+	    Class c1 = new ArrayList<String>().getClass();
+	    Class c2 = new ArrayList<Integer>().getClass();
+	    System.out.println(c1 == c2);
+	  }
+	}
+
+**Output:**
+>true
+
+ Логика подсказывает, что ArrayList<String> и ArrayList<Integer> являются разными типами. Разные типы ведут себя по-разному; так, при попытке поместить Integer в ArrayList<String> вы получите другое поведение (ошибка), чем при помещении Integer в ArrayList<Integer> (успех). И все же из приведенной программы, следует, что они относятся к одному типу.
+
+ Еще один пример:
+
+	//: generics/LostInformation.java
+	import java.util.*;
+	
+	class Frob {}
+	class Fnorkle {}
+	class Quark<Q> {}
+	class Particle<POSITION,MOMENTUM> {}
+	
+	public class LostInformation {
+	  public static void main(String[] args) {
+	    List<Frob> list = new ArrayList<Frob>();
+	    Map<Frob,Fnorkle> map = new HashMap<Frob,Fnorkle>();
+	    Quark<Fnorkle> quark = new Quark<Fnorkle>();
+	    Particle<Long,Double> p = new Particle<Long,Double>();
+	    System.out.println(Arrays.toString(
+	      list.getClass().getTypeParameters()));
+	    System.out.println(Arrays.toString(
+	      map.getClass().getTypeParameters()));
+	    System.out.println(Arrays.toString(
+	      quark.getClass().getTypeParameters()));
+	    System.out.println(Arrays.toString(
+	      p.getClass().getTypeParameters()));
+	  }
+	}
+
+**Output:**
+>[E]
+
+>[K, V]
+
+>[Q]
+
+>[POSITION, MOMENTUM]
+
+ Согласно документации JDK, метод Class.getTypeParameter() "возвращает массив объектов TypeVariable, представляющих переменные типов, объявленные в объявлении обобщения..." Это наводит на мысль, что вы можете получить информацию о параметрах-типах. Но как видно из результатов, метод возвращает только идентификаторы, представляющие параметры, а эта информация интереса не предоставляет.
+
+ Итак, жестокая правда:
+
+ *В обобщенном коде информация о параметрах-типах обобщения недоступна.*
+ 
+ Обобщения Java реализуются с использованием *стирания* (erasure). Иначе говоря, при использовании обобщения любая конкретная информация о типе теряется. В обобщении известно лишь то, что вы используете объект. Таким образом, List<String> и List<Integer> во время выполнения по сути являются одним типом. Обе формы "стираются" до "низкоуровневого" типа List. 
+
+####Проблема стирания
+
+ Обозначение вида List<T> стирается до List, а переменные обычные типы стираются до Object (если не задано ограничение).
+
+ Главной причиной для реализации стирания является процесс перехода от необобщенного кода к обобщенному и возможность встраивания обобщений в язык без нарушения работоспособности существующих библиотек. Благодаря стиранию существующий необобщенный клиентский код используется без изменений, пока клиенты не будут готовы переписать код для поддержки обобщений. Это стоящая цель, потому что она предотвращает внезапное нарушение работоспособности всего существующего кода.
+
+ За стирание приходится заплатить значительную цену. Обобщенные типы не могут использоваться в операциях, в которых явно задействуются типы времени выполнения - приведения типов, операции instanceof и выражения new. Так как вся информация о типе параметров теряется, при написании обобщенного кода вы должны постоянно напоминать себе, что наличие информации о типе - не более чем видимость.
+
+ Таким образом, когда вы пишите фрагмент кода вида:
+
+	class Foo<T> {
+		T var;
+	}
+
+ может показаться, что при создании экземпляра Foo:
+
+ 	Foo<Cat> t = new Foo<Cat>();
+
+ код класса Foo должен знать, что теперь он работает с Cat. Синтаксис создает впечатление, что тип T автоматически подставляется везде, где он используется в классе. Но это не так, и при написании кода класса вы должны постоянно напоминать себе: "Нет, это всего лишь Object".
+
+ Кроме того, стирание и миграционная совместимость означают, что правильность использования обобщений не обеспечивается там, где это было бы желательно:
+
+	//: generics/ErasureAndInheritance.java
+	
+	class GenericBase<T> {
+	  private T element;
+	  public void set(T arg) { arg = element; }
+	  public T get() { return element; }
+	}
+	
+	class Derived1<T> extends GenericBase<T> {}
+	
+	class Derived2 extends GenericBase {} // No warning
+	
+	// class Derived3 extends GenericBase<?> {}
+	// Strange error:
+	//   unexpected type found : ?
+	//   required: class or interface without bounds	
+	
+	public class ErasureAndInheritance {
+	  @SuppressWarnings("unchecked")
+	  public static void main(String[] args) {
+	    Derived2 d2 = new Derived2();
+	    Object obj = d2.get();
+	    d2.set(obj); // Warning here!
+	  }
+	}
+
+ Derived2 наследует от GenericBase без параметров, и компилятор не предупреждает об этом. Предупреждение не выдается до момента вызова set().
+
+####Компенсация стирания
+
+ Стирание приводит к невозможности выполнения некоторых операций в обобщенном коде. Любые операции требующие знания точного типа во время выполнения, работать не будут:
+
+	//: generics/Erased.java
+	// {CompileTimeError} (Won't compile)
+	
+	public class Erased<T> {
+	  private final int SIZE = 100;
+	  public static void f(Object arg) {
+	    if(arg instanceof T) {}          // Error
+	    T var = new T();                 // Error
+	    T[] array = new T[SIZE];         // Error
+	    T[] array = (T)new Object[SIZE]; // Unchecked warning
+	  }
+	}
+
+ Стирание приходится компенсировать введение *метки типа*. Это означает явную передачу объекта Class для своего типа, чтобы его можно было использовать в выражениях типов:
+
+	//: generics/ClassTypeCapture.java
+	
+	class Building {}
+	class House extends Building {}
+	
+	public class ClassTypeCapture<T> {
+	  Class<T> kind;
+	  public ClassTypeCapture(Class<T> kind) {
+	    this.kind = kind;
+	  }
+	  public boolean f(Object arg) {
+	    return kind.isInstance(arg);
+	  }	
+	  public static void main(String[] args) {
+	    ClassTypeCapture<Building> ctt1 =
+	      new ClassTypeCapture<Building>(Building.class);
+	    System.out.println(ctt1.f(new Building()));
+	    System.out.println(ctt1.f(new House()));
+	    ClassTypeCapture<House> ctt2 =
+	      new ClassTypeCapture<House>(House.class);
+	    System.out.println(ctt2.f(new Building()));
+	    System.out.println(ctt2.f(new House()));
+	  }
+	}
+**Output:**
+>true
+
+>true
+
+>false
+
+>true
+
+####Массивы обобщений
+
+ Как было показано в Erased.java, создать массив обобщений невозможно. Как правило, проблема решается использованием ArrayList везде, где возникает потребность в создании массива обобщений:
+
+	//: generics/ListOfGenerics.java
+	import java.util.*;
+	
+	public class ListOfGenerics<T> {
+	  private List<T> array = new ArrayList<T>();
+	  public void add(T item) { array.add(item); }
+	  public T get(int index) { return array.get(index); }
+	} 
+
+###Ограничения
+
+ Ограничения сужают диапазон параметров-типов, которые могут использоваться с обобщениями. И хотя это позволяет вам задавать свои правила относительно типов, к которым могут применяться обобщения, более важным может оказаться другой эффект: возможность вызова методов из ограниченных типов.
+
+ Так как стирание удаляет информацию типа, для неограничиваемых параметров обобщений можно вызвать только методы, доступные для Object. Но при ограничении параметра подмножеством типов вы сможете вызвать методы этого подмножества.
+
+ Для установления этого ограничения обобщения Java использует ключевое слово extends. Важно понимать, что в контексте обобщений extends имеет совершенно иной смысл, чем обычно. 
+
+ Пример:
+
+	//: generics/BasicBounds.java
+	
+	interface HasColor { java.awt.Color getColor(); }
+	
+	class Colored<T extends HasColor> {
+	  T item;
+	  Colored(T item) { this.item = item; }
+	  T getItem() { return item; }
+	  // Ограничение позволяет вызвать метод:
+	  java.awt.Color color() { return item.getColor(); }
+	}
+	
+	class Dimension { public int x, y, z; }
+	
+	// Не работает - сначала должен быть указан класс, затем интерфейсы:
+	// class ColoredDimension<T extends HasColor & Dimension> {
+		
+	// Множественные ограничения:
+	class ColoredDimension<T extends Dimension & HasColor> {
+	  T item;
+	  ColoredDimension(T item) { this.item = item; }
+	  T getItem() { return item; }
+	  java.awt.Color color() { return item.getColor(); }
+	  int getX() { return item.x; }
+	  int getY() { return item.y; }
+	  int getZ() { return item.z; }
+	}
+	
+	interface Weight { int weight(); }	
+	
+	// Как и в случае с наследованием, можно указать только
+	// один конкретный класс, но несколько интерфейсов:
+	class Solid<T extends Dimension & HasColor & Weight> {
+	  T item;
+	  Solid(T item) { this.item = item; }
+	  T getItem() { return item; }
+	  java.awt.Color color() { return item.getColor(); }
+	  int getX() { return item.x; }
+	  int getY() { return item.y; }
+	  int getZ() { return item.z; }
+	  int weight() { return item.weight(); }
+	}
+	
+	class Bounded
+	extends Dimension implements HasColor, Weight {
+	  public java.awt.Color getColor() { return null; }
+	  public int weight() { return 0; }
+	}	
+	
+	public class BasicBounds {
+	  public static void main(String[] args) {
+	    Solid<Bounded> solid =
+	      new Solid<Bounded>(new Bounded());
+	    solid.color();
+	    solid.getY();
+	    solid.weight();
+	  }
+	}
+ 
+  Возможно, вы заметили, что пример BasicBounds.java содержит избыточность, которую можно устранить посредством наследования. В следующем примере видно, что каждый уровень наследования также добавляет ограничения:
+
+	//: generics/InheritBounds.java
+	
+	class HoldItem<T> {
+	  T item;
+	  HoldItem(T item) { this.item = item; }
+	  T getItem() { return item; }
+	}
+	
+	class Colored2<T extends HasColor> extends HoldItem<T> {
+	  Colored2(T item) { super(item); }
+	  java.awt.Color color() { return item.getColor(); }
+	}
+	
+	class ColoredDimension2<T extends Dimension & HasColor>
+	extends Colored2<T> {
+	  ColoredDimension2(T item) {  super(item); }
+	  int getX() { return item.x; }
+	  int getY() { return item.y; }
+	  int getZ() { return item.z; }
+	}
+	
+	class Solid2<T extends Dimension & HasColor & Weight>
+	extends ColoredDimension2<T> {
+	  Solid2(T item) {  super(item); }
+	  int weight() { return item.weight(); }
+	}
+	
+	public class InheritBounds {
+	  public static void main(String[] args) {
+	    Solid2<Bounded> solid2 =
+	      new Solid2<Bounded>(new Bounded());
+	    solid2.color();
+	    solid2.getY();
+	    solid2.weight();
+	  }
+	} 
+
+ HoldItem просто хранит объект; это поведение наследуется классом Colored2, который также требует, чтобы его параметр раелизовал HasColor.ColoredDimension2 и Solid2 расширяют иерархию и добавляют ограничения на каждом уровне. Теперь методы наследуются и их не нужно повторять для каждого класса.
+
+###Маски
+ 
