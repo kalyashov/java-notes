@@ -4217,6 +4217,415 @@ getInterface – реализуемые интерфейсы
 
 ###Обобщенные интерфейсы
 
+ Обобщения также работают с интерфейсами. Например,*генератор* представляет собой класс для создания объектов. В действительности он является разновидностью паттерна проектирования "Фабричный метод", но запрашивая у генератора новый объект, вы не передаете ему никаких аргументов, тогда как фабричный метод обычно вызывается с аргументами. Генератор умеет создавать новые объекты без дополнительной информации.
+
+ Как правило, генератор определяет всего один метод, создающий новые объекты:
+
+	//: net/mindview/util/Generator.java
+	// A generic interface.
+	package net.mindview.util;
+	public interface Generator<T> { T next(); } 
+
+ Возвращаемый тип next() параметризуется по T.
+
+ Пример:
+
+	//: generics/coffee/Coffee.java
+	package generics.coffee;
+	
+	public class Coffee {
+	  private static long counter = 0;
+	  private final long id = counter++;
+	  public String toString() {
+	    return getClass().getSimpleName() + " " + id;
+	  }
+	}
+
+	//: generics/coffee/Latte.java
+	package generics.coffee;
+	public class Latte extends Coffee {}
+
+	//: generics/coffee/Mocha.java
+	package generics.coffee;
+	public class Mocha extends Coffee {} 
+
+	//: generics/coffee/Cappuccino.java
+	package generics.coffee;
+	public class Cappuccino extends Coffee {}
+
+	//: generics/coffee/Americano.java
+	package generics.coffee;
+	public class Americano extends Coffee {} 
+
+	//: generics/coffee/Breve.java
+	package generics.coffee;
+	public class Breve extends Coffee {}
+
+	//: generics/coffee/CoffeeGenerator.java
+	// Generate different types of Coffee:
+	package generics.coffee;
+	import java.util.*;
+	import net.mindview.util.*;
+
+ Теперь можно реализовать интерфейс Generator<Coffee> для создания случайных типов объектов Coffee:
+	
+	public class CoffeeGenerator
+	implements Generator<Coffee>, Iterable<Coffee> {
+	  private Class[] types = { Latte.class, Mocha.class,
+	    Cappuccino.class, Americano.class, Breve.class, };
+	  private static Random rand = new Random(47);
+	  public CoffeeGenerator() {}
+	  // For iteration:
+	  private int size = 0;
+	  public CoffeeGenerator(int sz) { size = sz; }	
+	  public Coffee next() {
+	    try {
+	      return (Coffee)
+	        types[rand.nextInt(types.length)].newInstance();
+	      // Report programmer errors at run time:
+	    } catch(Exception e) {
+	      throw new RuntimeException(e);
+	    }
+	  }
+	  class CoffeeIterator implements Iterator<Coffee> {
+	    int count = size;
+	    public boolean hasNext() { return count > 0; }
+	    public Coffee next() {
+	      count--;
+	      return CoffeeGenerator.this.next();
+	    }
+	    public void remove() { // Not implemented
+	      throw new UnsupportedOperationException();
+	    }
+	  };	
+	  public Iterator<Coffee> iterator() {
+	    return new CoffeeIterator();
+	  }
+	  public static void main(String[] args) {
+	    CoffeeGenerator gen = new CoffeeGenerator();
+	    for(int i = 0; i < 5; i++)
+	      System.out.println(gen.next());
+	    for(Coffee c : new CoffeeGenerator(5))
+	      System.out.println(c);
+	  }
+	}
+
+**Output:**
+>Americano 0
+
+>Latte 1
+
+>Americano 2
+
+>Mocha 3
+
+>Mocha 4
+
+>Breve 5
+
+>Americano 6
+
+>Latte 7
+
+>Cappuccino 8
+
+>Cappuccino 9
+
+  Также реализуется интерфейс Iterable, что позволяет использовать конструкцию foreach. Однако необходим "сторож" для обнаружения завершения перебора, который создается во втором конструкторе. 
+
+###Обобщенные методы
+
+ Также возможна параметризация методов внутри класса. Сам класс при этом не обязан быть обобщенным.
+
+ Чтобы определить обобщенный метод, следует поместить список параметров-типов перед возвращаемым значением:
  
+	//: generics/GenericMethods.java
+	
+	public class GenericMethods {
+	  public <T> void f(T x) {
+	    System.out.println(x.getClass().getName());
+	  }
+	  public static void main(String[] args) {
+	    GenericMethods gm = new GenericMethods();
+	    gm.f("");
+	    gm.f(1);
+	    gm.f(1.0);
+	    gm.f(1.0F);
+	    gm.f('c');
+	    gm.f(gm);
+	  }
+	}
+
+**Output:**
+>java.lang.String
+
+>java.lang.Integer
+
+>java.lang.Double
+
+>java.lang.Float
+
+>java.lang.Character
+
+>GenericMethods
+
+ При использовании обобщенных методов указывать параметры-типы обычно не обязательно, потому что компилятор может вычислить их за вас. 
+
+ Для вызовов f(), использующих примитивные типы, в дело вступает *автоматическая упаковка* - автоматическое преобразование примитивных типов в соответствующие объекты. 
+
+####Использование автоматического определения аргументов-типов
+
+ Автоматическое определение аргументов-типов работает *только* при присваивании. Если передать результат вызова метода в аргумент другого метода, компилятор не пытается вычислить тип. Вместо этого он интерпретирует вызов так, словно возвращаемое значение присваивается переменной типа Object.
+
+####Явное указание типа
+
+ Тип для обобщенного метода можно задать явно, хотя необходимость в таком синтаксисе возникает редко. Для этого тип указывается в угловых скобках после точки и непосредственно перед именем метода.
+
+	TestClass.<T,M>method();
+
+####Списки аргументов переменной длины и обобщенные методы
+
+ Обобщенные методы нормально сосуществуют со списками аргументов переменной длины:
+
+	//: generics/GenericVarargs.java
+	import java.util.*;
+	
+	public class GenericVarargs {
+	  public static <T> List<T> makeList(T... args) {
+	    List<T> result = new ArrayList<T>();
+	    for(T item : args)
+	      result.add(item);
+	    return result;
+	  }
+	  public static void main(String[] args) {
+	    List<String> ls = makeList("A");
+	    System.out.println(ls);
+	    ls = makeList("A", "B", "C");
+	    System.out.println(ls);
+	    ls = makeList("ABCDEFFHIJKLMNOPQRSTUVWXYZ".split(""));
+	    System.out.println(ls);
+	  }
+	}
+**Output:**
+>[A]
+
+>[A, B, C]
+
+>[, A, B, C, D, E, F, F, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z]
+
+ Метод makeList() реализует ту же функциональность, что и метод java.util.Arrays.asList() стандартной библиотеки.
+
+####Обобщенный метод для использования с генераторами
+
+ Для заполнения коллекций удобно использовать генератор, причем эту операцию логично обобщить:
+
+	//: generics/Generators.java
+	// A utility to use with Generators.
+	import generics.coffee.*;
+	import java.util.*;
+	import net.mindview.util.*;
+	
+	public class Generators {
+	  public static <T> Collection<T>
+	  fill(Collection<T> coll, Generator<T> gen, int n) {
+	    for(int i = 0; i < n; i++)
+	      coll.add(gen.next());
+	    return coll;
+	  }	
+	  public static void main(String[] args) {
+	    Collection<Coffee> coffee = fill(
+	      new ArrayList<Coffee>(), new CoffeeGenerator(), 4);
+	    for(Coffee c : coffee)
+	      System.out.println(c);
+	  }
+	}
+
+**Output:**
+>Americano 0
+
+>Latte 1
+
+>Americano 2
+
+>Mocha 3
+
+####Генератор общего назначения
+
+ Следующий класс создает Generator для любого класса, имеющего конструктор по умолчанию.
+
+	//: net/mindview/util/BasicGenerator.java
+	// Automatically create a Generator, given a class
+	// with a default (no-arg) constructor.
+	package net.mindview.util;
+	
+	public class BasicGenerator<T> implements Generator<T> {
+	  private Class<T> type;
+	  public BasicGenerator(Class<T> type){ this.type = type; }
+	  public T next() {
+	    try {
+	      // Assumes type is a public class:
+	      return type.newInstance();
+	    } catch(Exception e) {
+	      throw new RuntimeException(e);
+	    }
+	  }
+	  // Produce a Default generator given a type token:
+	  public static <T> Generator<T> create(Class<T> type) {
+	    return new BasicGenerator<T>(type);
+	  }
+	}
+
+ Этот класс предоставляет базовую реализацию для создания объекта класса, который является открытым и имеет конструктор по умолчанию (без аргументов).
+
+ Чтобы создать один из объектов BasicGenerator, следует вызвать метод create() и передать ему маркер генерируемого типа. Обобщенный метод create() позволяет использовать запись BasicGenerator.create(MyType.class) вместо более громоздкой записи new BasicGenerator<MyType>(MyType.class).
+
+ Пример:
+
+	//: generics/CountedObject.java
+	
+	public class CountedObject {
+	  private static long counter = 0;
+	  private final long id = counter++;
+	  public long id() { return id; }
+	  public String toString() { return "CountedObject " + id;}
+	} 
+
+ При помощи BasicGenerator можно легко создать Generator для CountedObject:
+
+	//: generics/BasicGeneratorDemo.java
+	import net.mindview.util.*;
+	
+	public class BasicGeneratorDemo {
+	  public static void main(String[] args) {
+	    Generator<CountedObject> gen =
+	      BasicGenerator.create(CountedObject.class);
+	    for(int i = 0; i < 5; i++)
+	      System.out.println(gen.next());
+	  }
+	}
+
+**Output:**
+>CountedObject 0
+
+>CountedObject 1
+
+>CountedObject 2
+
+>CountedObject 3
+
+>CountedObject 4 
+
+####Упрощение использования кортежей
+
+	//: net/mindview/util/Tuple.java
+	// Tuple library using type argument inference.
+	package net.mindview.util;
+	
+	public class Tuple {
+	  public static <A,B> TwoTuple<A,B> tuple(A a, B b) {
+	    return new TwoTuple<A,B>(a, b);
+	  }
+	  public static <A,B,C> ThreeTuple<A,B,C>
+	  tuple(A a, B b, C c) {
+	    return new ThreeTuple<A,B,C>(a, b, c);
+	  }
+	  public static <A,B,C,D> FourTuple<A,B,C,D>
+	  tuple(A a, B b, C c, D d) {
+	    return new FourTuple<A,B,C,D>(a, b, c, d);
+	  }
+	  public static <A,B,C,D,E>
+	  FiveTuple<A,B,C,D,E> tuple(A a, B b, C c, D d, E e) {
+	    return new FiveTuple<A,B,C,D,E>(a, b, c, d, e);
+	  }
+	} 
+
+####Операции с множествами
+
+	//: net/mindview/util/Sets.java
+	package net.mindview.util;
+	import java.util.*;
+	
+	public class Sets {
+	  // Объединение
+	  public static <T> Set<T> union(Set<T> a, Set<T> b) {
+	    Set<T> result = new HashSet<T>(a);
+	    result.addAll(b);
+	    return result;
+	  }
+      // Пересечение
+	  public static <T>
+	  Set<T> intersection(Set<T> a, Set<T> b) {
+	    Set<T> result = new HashSet<T>(a);
+	    result.retainAll(b);
+	    return result;
+	  }	
+	  // Вычитание подмножества из надмножества
+	  public static <T> Set<T>
+	  difference(Set<T> superset, Set<T> subset) {
+	    Set<T> result = new HashSet<T>(superset);
+	    result.removeAll(subset);
+	    return result;
+	  }
+	  // Рефлексивность - все, что не входит в пересечение:
+	  public static <T> Set<T> complement(Set<T> a, Set<T> b) {
+	    return difference(union(a, b), intersection(a, b));
+	  }
+	}
+
+ В следующем примере метод Sets.difference() демонстрирует различия в методах различных классов Collection и Map из java.util:
+
  
- 
+	//: net/mindview/util/ContainerMethodDifferences.java
+	package net.mindview.util;
+	import java.lang.reflect.*;
+	import java.util.*;
+	
+	public class ContainerMethodDifferences {
+	  static Set<String> methodSet(Class<?> type) {
+	    Set<String> result = new TreeSet<String>();
+	    for(Method m : type.getMethods())
+	      result.add(m.getName());
+	    return result;
+	  }
+	  static void interfaces(Class<?> type) {
+	    System.out.print("Interfaces in " +
+	      type.getSimpleName() + ": ");
+	    List<String> result = new ArrayList<String>();
+	    for(Class<?> c : type.getInterfaces())
+	      result.add(c.getSimpleName());
+	    System.out.println(result);
+	  }
+	  static Set<String> object = methodSet(Object.class);
+	  static { object.add("clone"); }
+	  static void
+	  difference(Class<?> superset, Class<?> subset) {
+	    System.out.print(superset.getSimpleName() +
+	      " extends " + subset.getSimpleName() + ", adds: ");
+	    Set<String> comp = Sets.difference(
+	      methodSet(superset), methodSet(subset));
+	    comp.removeAll(object); // Don't show 'Object' methods
+	    System.out.println(comp);
+	    interfaces(superset);
+	  }
+	  public static void main(String[] args) {
+	    System.out.println("Collection: " +
+	      methodSet(Collection.class));
+	    interfaces(Collection.class);
+	    difference(Set.class, Collection.class);
+	    difference(HashSet.class, Set.class);
+	    difference(LinkedHashSet.class, HashSet.class);
+	    difference(TreeSet.class, Set.class);
+	    difference(List.class, Collection.class);
+	    difference(ArrayList.class, List.class);
+	    difference(LinkedList.class, List.class);
+	    difference(Queue.class, Collection.class);
+	    difference(PriorityQueue.class, Queue.class);
+	    System.out.println("Map: " + methodSet(Map.class));
+	    difference(HashMap.class, Map.class);
+	    difference(LinkedHashMap.class, HashMap.class);
+	    difference(SortedMap.class, Map.class);
+	    difference(TreeMap.class, Map.class);
+	  }
+	}
+
+###Анонимные внутренние классы
