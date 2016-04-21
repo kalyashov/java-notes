@@ -5254,4 +5254,282 @@ getInterface – реализуемые интерфейсы
 
  Автоматическая упаковка даже позволяет использовать синтаксис foreach для производства int. В общем случае такое решение работает нормально - ваш код может успешно сохранять и читать int. При этом выполняются некоторые преобразования типа, но они остаются скрытыми от вас. Впрочем, если лишние преобразования создают проблемы с производительностью, вы можете использовать специализированную версию контейнеров, приспособленную для примитивных типов.
 
+####Реализация параметризованных интерфейсов
+
+ Класс не может реализовать две разновидности одного обобщенного интерфейса. Из-за стирания они превратятся в один интерфейс. 
+
+ Пример:
+	
+	//: generics/MultipleInterfaceVariants.java
+	// {CompileTimeError} (Won't compile)
+	
+	interface Payable<T> {}
+	
+	class Employee implements Payable<Employee> {}
+	class Hourly extends Employee
+	  implements Payable<Hourly> {} 
+
+ Класс Hourly не компилируется, потому что стирание сокращает Payabke<Employee> и Payable<Hourly> до одного класса Payable, а приведенный выше код будет означать, что один интерфейс реализуется дважды. При удалении обобщенных параметров из обоих мест использования Payable (как это делает компилятор при стирании) код откомпилируется.
+
+####Приведение типа и предупреждения
+
+ Использование приведения типов и instanceof с обобщенным параметром-типом ни к чему не приводит. Следующий контейнер хранит значения во внутреннем представлении как Object и преобразует их к типу T при чтении:
+
+	//: generics/GenericCast.java
+	
+	class FixedSizeStack<T> {
+	  private int index = 0;
+	  private Object[] storage;
+	  public FixedSizeStack(int size) {
+	    storage = new Object[size];
+	  }
+	  public void push(T item) { storage[index++] = item; }
+	  @SuppressWarnings("unchecked")
+	  public T pop() { return (T)storage[--index]; }
+	}	
+	
+	public class GenericCast {
+	  public static final int SIZE = 10;
+	  public static void main(String[] args) {
+	    FixedSizeStack<String> strings =
+	      new FixedSizeStack<String>(SIZE);
+	    for(String s : "A B C D E F G H I J".split(" "))
+	      strings.push(s);
+	    for(int i = 0; i < SIZE; i++) {
+	      String s = strings.pop();
+	      System.out.print(s + " ");
+	    }
+	  }
+	}
+
+**Output:**
+>J I H G F E D C B A
  
+ Без аннотации @SupressWarnings компилятор выдает для pop() предупреждения "неконтролируемов привидение типа". Из-за стирания он не знает, безопасно ли приведение типа, и метод pop() не выполняет никакого реального приведения типа. T стирается по первому ограничению, которым по умолчанию является Object, так что pop() фактически преобразует Object в Object.
+
+ В некоторых ситуациях обобщения не отменяют необходимости в приведении типа, и компилятор выдает нежелательное предупреждение:
+
+	//: generics/NeedCasting.java
+	import java.io.*;
+	import java.util.*;
+	
+	public class NeedCasting {
+	  @SuppressWarnings("unchecked")
+	  public void f(String[] args) throws Exception {
+	    ObjectInputStream in = new ObjectInputStream(
+	      new FileInputStream(args[0]));
+	    List<Widget> shapes = (List<Widget>)in.readObject();
+	  }
+	}
+
+ Метод readObject() не может знать, что он читает, поэтому возвращает объект, к которому должно быть применено преобразование типа. Но если закомментировать аннотацию @SupressWarnings и откомпилировать программы, то вы получите предупреждение, что в классе используются неконтролируемые или небезопасные операции.
+
+ Вы обязаны выполнить приведение типа, но при этом вам подсказывают, что делать этого не следует. Для решения следует применить новую форму приведения типа, появившуюся в Java SE5, - приведение через обобщенный класс: 
+ 
+	//: generics/ClassCasting.java
+	import java.io.*;
+	import java.util.*;
+	
+	public class ClassCasting {
+	  @SuppressWarnings("unchecked")
+	  public void f(String[] args) throws Exception {
+	    ObjectInputStream in = new ObjectInputStream(
+	      new FileInputStream(args[0]));
+	      // Won't Compile:
+	//    List<Widget> lw1 =
+	//    List<Widget>.class.cast(in.readObject());
+	    List<Widget> lw2 = List.class.cast(in.readObject());
+	  }
+	}
+
+ Однако приведение к фактическому типу (List<Widget>) невозможно. И даже при добавлении дополнительного приведения типа:
+
+	(List<Widget>) List.class.cast(in.readObject());
+
+ все равно будет выдано предупреждение.
+
+####Перегрузка
+
+ Следующая программа не откомпилируется, хотя на первый взгляд выглядит логично:
+ 
+	//: generics/UseList.java
+	// {CompileTimeError} (Won't compile)
+	import java.util.*;
+	
+	public class UseList<W,T> {
+	  void f(List<T> v) {}
+	  void f(List<W> v) {}
+	}
+
+ Перегрузка метода порождает идентичную сигнатуру типа из-за стирания.
+
+ Вместо этого необходимо явно указать имена методов (разные), если стертые аргументы не позволяют получить уникальный список аргументов.
+
+ Подобные проблемы обнаруживаются компилятором.
+
+####Перехват интерфейса базовым классом
+
+ Предположим, имеется класс Pet, реализующий Comparable для сравнения с другими объектами Pet:
+
+	//: generics/ComparablePet.java
+	
+	public class ComparablePet
+	implements Comparable<ComparablePet> {
+	  public int compareTo(ComparablePet arg) { return 0; }
+	} 
+
+ Есть смысл сузить тип, с которым может сравниваться субкласс ComparablePet. Например, Cat может сравниваться только с другими объектами Cat:
+
+	//: generics/HijackedInterface.java
+	// {CompileTimeError} (Won't compile)
+	
+	class Cat extends ComparablePet implements Comparable<Cat>{
+	  // Error: Comparable cannot be inherited with
+	  // different arguments: <Cat> and <Pet>
+	  public int compareTo(Cat arg) { return 0; }
+	}
+
+ К сожалению, это решение не сработает. Когда для Comparable устанавливается аргумент ComparablePet, ни одни реализующий класс не может сравниваться ни с чем, кроме ComparablePet:
+
+	//: generics/RestrictedComparablePets.java
+	
+	class Hamster extends ComparablePet
+	implements Comparable<ComparablePet> {
+	  public int compareTo(ComparablePet arg) { return 0; }
+	}
+	
+	// Или просто:
+	
+	class Gecko extends ComparablePet {
+	  public int compareTo(ComparablePet arg) { return 0; }
+	} 
+
+ Класс Hamster показывает, что возможно реализовать интерфейс, присутствующий в ComparablePet, - при условии его точного совпадения, включая параметры-типы. Однако это ничем не отличается от переопределения методов базового класса, как видно на примере Gecko.
+
+###Самоограничиваемые типы
+ 
+ Существует одна довольно заумная идиома, которая периодически встречается в обобщениях Java. Вот как она выглядит:
+ 
+	class SelfBounded<T extends SelfBounded<T>> { // ...
+
+ Класс SelfBounded получает обобщенный аргумент T, T ограничивается по SelfBounded, получающего аргумент T.
+
+####Необычные рекурсивные обобщения
+
+ Прямое наследование от обобщенного класса невозможно. Тем не менее наследование можно применить к классу, который использует обобщенный параметр в своем определении.
+
+	//: generics/CuriouslyRecurringGeneric.java
+	
+	class GenericType<T> {}
+	
+	public class CuriouslyRecurringGeneric
+	  extends GenericType<CuriouslyRecurringGeneric> {} 
+
+ Происходящее можно назвать "необычным рекурсивным обобщением" (curiously recurring generics, CRG) по названию паттерна "Необычный рекурсивный шаблон" для С++. Под "необычной рекурсией" имеется в виду то, что класс несколько необычно появляется в своем базовом классе.
+
+ Основной смысл обобщений в Java проявляется в передаче аргументов и возвращаемых типов, так что он может создать базовый класс, использующий производный тип в типах своих аргументов и возвращаемого значения. Также производный тип может использоваться для типов полей, несмотря на то что они будут стерты до Object. Следующий обобщенный класс выражает эту мысль:
+
+	//: generics/BasicHolder.java
+	
+	public class BasicHolder<T> {
+	  T element;
+	  void set(T arg) { element = arg; }
+	  T get() { return element; }
+	  void f() {
+	    System.out.println(element.getClass().getSimpleName());
+	  }
+	}
+
+ BasicHolder можно использовать в необычном рекурсивном обобщении:
+
+	//: generics/CRGWithBasicHolder.java
+	
+	class Subtype extends BasicHolder<Subtype> {}
+	
+	public class CRGWithBasicHolder {
+	  public static void main(String[] args) {
+	    Subtype st1 = new Subtype(), st2 = new Subtype();
+	    st1.set(st2);
+	    Subtype st3 = st1.get();
+	    st1.f();
+	  }
+	}
+
+**Output:**
+>Subtype
+
+ Новый класс Subtype получает аргументы и возвращает значения типа Subtype, а не базового класса BasicHolder. В этом проявляется сущность "необычных рекурсивных обобщений: базовый класс заменяет свои параметры производным классом. Это означает, что обобщенный базовый класс становится своего рода шаблоном общей функциональности для всех производных классов, но эта функциональность будет использовать производный тип для всех своих аргументов и возвращаемых значений. Иначе говоря, в полученном классе будет использоваться точный тип вместо базового типа. Таким образом, в Subtype и аргументы set(), и возвращаемое значение get() относятся к точному типу Subtype.
+
+####Самоограничение
+
+ Самоограничение служит только для принудительно соблюдения отношений наследования. Используя самоограничение, вы знаете, что параметр-тип, используемый классом, будет относиться к тому жу базовому типу, что и класс, использующий этот параметр. Оно заставляет всех пользователей этого класса следовать указанному образцу.
+
+ Самоограничение также можно использовать для обобщенных методов:
+
+	//: generics/SelfBoundingMethods.java
+	
+	public class SelfBoundingMethods {
+	  static <T extends SelfBounded<T>> T f(T arg) {
+	    return arg.set(arg).get();
+	  }
+	  public static void main(String[] args) {
+	    A a = f(new A());
+	  }
+	}
+
+ Тем самым вы запрещаете применять метод к чему-либо, кроме самоограниченного аргумента представленной формы.
+
+####Ковариантность аргументов
+ 
+ Полезность самоограничиваемых аргументов заключается в том, что они производят *ковариантные типы аргументов* - типы аргументов методов меняются в соответствии с субклассами.
+
+###Динамическая безопасность типов
+
+ Так как обобщенные контейнеры могут передаваться коду, написанному до Java SE5, все еще остается опасность повреждения контейнеров старым кодом. В Java SE5 входит библиотека java.util.Collections с набором инструментов для решения проблем проверки типов в подобных ситуациях:статические методы checkedCollection(), checkedList(), checkedMap(), checkedSet(), checkedSortedMap() и checkedSortedSet(). Каждый метод в первом аргументе получает контейнер, который вы хотите динамически проверять, а во втором - тип, который требуется выдержать.
+
+ Контролируемый контейнер возбуждает исключение ClassCastException при попытке вставки неподходящего объекта (в отличие от неспециализированного контейнера, который сообщит о проблемы при извлечении объекта). В последнем случае вы знаете, что проблема существует, но не знаете ее причины, с контролируемыми контейнерами вы будете знать, кто пытался вставить недопустимый объект).
+
+ Рассмотрим проблему "включения кошки в список собак" с применением контролируемого контейнера. Здесь oldStyleMethod() представляет старый код, потому что он получает неспециализированный тип List, а для подавления предупреждения необходимо включить аннотацию @SuppressWarnings("unchecked"):
+
+	//: generics/CheckedList.java
+	// Using Collection.checkedList().
+	import typeinfo.pets.*;
+	import java.util.*;
+	
+	public class CheckedList {
+	  @SuppressWarnings("unchecked")
+	  static void oldStyleMethod(List probablyDogs) {
+	    probablyDogs.add(new Cat());
+	  }	
+	  public static void main(String[] args) {
+	    List<Dog> dogs1 = new ArrayList<Dog>();
+	    oldStyleMethod(dogs1); // Quietly accepts a Cat
+	    List<Dog> dogs2 = Collections.checkedList(
+	      new ArrayList<Dog>(), Dog.class);
+	    try {
+	      oldStyleMethod(dogs2); // Throws an exception
+	    } catch(Exception e) {
+	      System.out.println(e);
+	    }
+	    // Derived types work fine:
+	    List<Pet> pets = Collections.checkedList(
+	      new ArrayList<Pet>(), Pet.class);
+	    pets.add(new Dog());
+	    pets.add(new Cat());
+	  }
+	}
+
+**Output:**
+> java.lang.ClassCastException: Attempt to insert class typeinfo.pets.Cat element into collection with element type class typeinfo.pets.Dog
+ 
+ Запустив программу, вы увидите, что вставка Cat проходит незамеченной для dogs1, а dogs2 немедленно возбуждает исключение при вставке неправильного типа. Также видно, что объекты производного типа могут помещаться в контейнер с проверкой базового типа.
+
+###Исключения
+
+ Из-за стирания возможности использования обобщений с исключениями сильно ограниченны. Блок catch не может перехватывать исключение обобщенного типа, потому что тип исключения должен быть известен и во время компиляции, и во время выполнения. Кроме того, обобщенный класс не может прямо или косвенно наследовать от Throwable (это препятствует определению обобщенных исключений, которые невозможно перехватить).
+
+ Однако параметры-типы могут использоваться  в секции throws объявления метода. Это позволяет писать обобщенный код, изменяемый по типу контролируемого исключения.
+
+##16 глава. Массивы
+
+ Массив в Java - наиболее эффективный способ организации размещения последовательности объектов (на самом деле ссылок на объекты) и произвольного доступа к ним. Массив - это простая 
