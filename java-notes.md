@@ -5732,3 +5732,358 @@ getInterface – реализуемые интерфейсы
  В последних версиях Java поддержка контейнеров значительно улучшилась, теперь контейнеры превосходят массивы во всех отношениях, кроме производительности, даже при том, что производительность контейнеров была значительно улучшена. Однако проблемы производительности все равно обычно никогда не возникает там, где вы склонны искать их причины.
 
 ##17 глава. Подробнее о контейнерах 
+
+ Полная диаграмма, включающая абстрактные класс и унаследованные компоненты (кроме реализаций Queue).
+
+ В Java SE5 были добавлены:
+
+ - Интерфейс Queue (реализуемый измененной версией LinkedList) и его реализации: PriorityQueue и различные разновидности BlockingQueue.
+ - Интерфейс ConcurrenMap и его реаилзация ConcurrentHashMap, также предназначенная для использования в многопоточных программах.
+ - CopyOnWriteArrayList и CopyOnWriteArraySet (для многопоточных программ).
+ - EnumSet и EnumMap, специальные реализации Set и Map для перечислений
+ - Некоторые вспомогательные классы Collections.
+
+
+ Блоки с контуром из длинных штрихов представляют абстрактные классы; также на диаграмме присутствуют классы, имена которых начинаются с "Abstract", это вспомогательные частичные реализации некоторого интерфейса.
+
+###Функциональность Collection
+
+ **Таблица 17.1** Функциональность Collection
+
+|Метод   |Предназначение|
+|--------|--------------|
+|boolean add(T)|Проверят, хранится ли в контейнере аргумент обобщенного типа Т. Возвращает false, если аргумент не был добавлен|
+|boolean addAll(Collection<? extends T>)|Добавляет все элементы, содержащиеся в аргументе. Возвращает true, если был добавлен хотя бы один элемент|
+|void clear()|Удаляет все элементы из контейнера (необязательный метод)|
+|boolean contains(T)|Возвращает true, если в контейнере хранится аргумент обобщенного типа T|
+|boolean containsAll(Collection<?> |Возвращает true, если в контейнере содержатся все элементы, имеющиеся в аргументе|
+|boolean isEmpty()|Возвращает true, если в контейнере нет элементов|
+|Iterator<T> iterator()|Возвращает объект Iterator<T>, который можно использовать для перемещения по элементам контейнера|
+|boolean remove(Object)|Если аргумент содержится в контейнере, то один его экземпляр из него удаляется. Возвращает true, если удаления прошло успешно|
+|boolean removeAll(Collection<?>)|Удаляет все элементы, содержащиеся в аргументе. Возвращает true, если было проведено хотя бы одно удаление|
+|boolean retainALl(Collection<?>|Оставляет в контейнере только те элементы, которые присутствуют в аргументе (Пересечение)|
+|int size()|Возвращает количество элементов в контейнере|
+|Object[] toArray()|Возвращает массив, содержащий все элементы контейнера|
+|<T> T[] toArray(T[] a)|Возвращает массив, содержащий все элементы контейнера, тип которых совпадает с типом массива-аргумента a|
+
+
+###Функциональность List
+
+ На базовом уровне контейнеры List просты в использовании. Чаще всего используются методы add() для добавления объектов, get() для их выборки по одному и iterator() для получения итератора последовательности.
+
+ Есть два типа список: основной ArrayList, который особенно хорошо при извлечении произвольных элементов из контейнера, и гораздо более мощный список LinkedList (который не разрабатывался для быстрого доступа к произвольным элементам, но зато он обладает более полным набором методов).
+
+###Set и порядок хранения
+
+ Разные реализации Set могут различаться не только поведением, но и требованиями к типу объекта, который можно поместить в конкретную реализацию Set:
+
+ **Таблица 17.2** Множество Set
+
+|Название класса/интерфейса|Описание|
+|--------------------------|--------|
+|Set(интерфейс)|Каждый элемент, добавляемый в множество Set, должен быть уникальным; в противном случае дубликат не добавляется. Все объекты, помещаемые в Set, должны определять метод equals() для выполнения сравнения. Интерфейс Set полностью идентичен интерфейсу Collection. Множество Set не гарантирует того, что хранимые в нем элементы будут располагаться в определенном порядке|
+|HashSet|Для реализации Set, у которых первостепенное значение имеет быстрый поиск. Хранимые объекты должны определять метод hashCode()|
+|TreeSet|Упорядоченное множество, реализованное на основе дерева. Из него можно извлекать упорядоченную последовательность элементов. Элементы также должны реализовать интерфейс Comparable|
+|LinkedHashSet|Обладает аналогичной HashSet скоростью поиска, а также своими силами (используя связанный список) запоминает порядок добавления элементов (порядок вставки). Таким обазом, при переборе элементов этого множества они следуют в порядке вставки. Элементы также должны определять hashCode()|
+
+ HashSet оптимизирован по скорости, при отсутствии других ограничений следует выбирать именно этот вариант.
+
+ Вы всегда должны создавать метод equals() как для хешированного множества, так и для множества на базе дерева, а метод hashCode() необходим только в том случае, если вы намереваетесь хранить объекты нового типа во множестве HashSet или LinkedHashSet.
+
+ Хороший стиль программирования подразумевает, что при переопределении метода equals() необходимо переопределять и метод hashCode().
+
+###SortedSet
+
+ Элементы отсортированного множества SortedSet гарантированно хранятся в порядке сортировки, что позволяет задействовать дополнительную функциональность, обеспечиваемую интерфейсом SortedSet.
+
+ - Сomparator comparator(): возвращает объект Comparator, использующийся для данного множества, или null для естественного упорядочивания.
+ - Object first(): производит наименьший элемент множества.
+ - Object last(): производит наибольший элемент множества.
+ - SortedSet subSet(fromElement, toElement): производит подмножество данного множества, в которое включены элементы от fromElement (включительно) до toElement (не включая).
+ - SortedSet headSet(toElement): производит подмножество, содержащее все элементы, меньшие toElement.
+ - SortedSet tailSet(fromElement): производит подмножество, содержащее все элементы, большие либо равные fromElement.
+
+	/: containers/SortedSetDemo.java
+	// What you can do with a TreeSet.
+	import java.util.*;
+	import static net.mindview.util.Print.*;
+	
+	public class SortedSetDemo {
+	  public static void main(String[] args) {
+	    SortedSet<String> sortedSet = new TreeSet<String>();
+	    Collections.addAll(sortedSet,
+	      "one two three four five six seven eight"
+	        .split(" "));
+	    print(sortedSet);
+	    String low = sortedSet.first();
+	    String high = sortedSet.last();
+	    print(low);
+	    print(high);
+	    Iterator<String> it = sortedSet.iterator();
+	    for(int i = 0; i <= 6; i++) {
+	      if(i == 3) low = it.next();
+	      if(i == 6) high = it.next();
+	      else it.next();
+	    }
+	    print(low);
+	    print(high);
+	    print(sortedSet.subSet(low, high));
+	    print(sortedSet.headSet(high));
+	    print(sortedSet.tailSet(low));
+	  }
+	}
+**Output:**
+>[eight, five, four, one, seven, six, three, two]
+
+>eight
+
+>two
+
+>one
+
+>two
+
+>[one, seven, six, three]
+
+>[eight, five, four, one, seven, six, three]
+
+>[one, seven, six, three, two]
+
+###Очереди
+ 
+ Если не считать многопоточных версий, в Java SE5 используются всего две реализации Queue: LinkedList и PriorityQueue. Они различаются прежде всего по поведению упорядочения, а не по производительности.
+
+ В следующем примере задействованы многие реализации Queue:
+
+	/: containers/QueueBehavior.java
+	// Compares the behavior of some of the queues
+	import java.util.concurrent.*;
+	import java.util.*;
+	import net.mindview.util.*;
+	
+	public class QueueBehavior {
+	  private static int count = 10;
+	  static <T> void test(Queue<T> queue, Generator<T> gen) {
+	    for(int i = 0; i < count; i++)
+	      queue.offer(gen.next());
+	    while(queue.peek() != null)
+	      System.out.print(queue.remove() + " ");
+	    System.out.println();
+	  }
+	  static class Gen implements Generator<String> {
+	    String[] s = ("one two three four five six seven " +
+	      "eight nine ten").split(" ");
+	    int i;
+	    public String next() { return s[i++]; }
+	  }
+	  public static void main(String[] args) {
+	    test(new LinkedList<String>(), new Gen());
+	    test(new PriorityQueue<String>(), new Gen());
+	    test(new ArrayBlockingQueue<String>(count), new Gen());
+	    test(new ConcurrentLinkedQueue<String>(), new Gen());
+	    test(new LinkedBlockingQueue<String>(), new Gen());
+	    test(new PriorityBlockingQueue<String>(), new Gen());
+	  }
+	}
+**Output:**
+>one two three four five six seven eight nine ten
+
+>eight five four nine one seven six ten three two
+
+>one two three four five six seven eight nine ten
+
+>one two three four five six seven eight nine ten
+
+>one two three four five six seven eight nine ten
+
+>eight five four nine one seven six ten three two
+
+ За исключением приоритетных очередей Queue производит элементы в порядке их помещения в Queue.
+
+####Приоритетные очереди
+ 
+ Рассмотрим на примере: список дел, в котором каждый объект содержит строку и два приоритета, первичный и вторичный. Порядок следования элементов списка снова определяется реализацией Comparable:
+
+	//: containers/ToDoList.java
+	// A more complex use of PriorityQueue.
+	import java.util.*;
+	
+	class ToDoList extends PriorityQueue<ToDoList.ToDoItem> {
+	  static class ToDoItem implements Comparable<ToDoItem> {
+	    private char primary;
+	    private int secondary;
+	    private String item;
+	    public ToDoItem(String td, char pri, int sec) {
+	      primary = pri;
+	      secondary = sec;
+	      item = td;
+	    }
+	    public int compareTo(ToDoItem arg) {
+	      if(primary > arg.primary)
+	        return +1;
+	      if(primary == arg.primary)
+	        if(secondary > arg.secondary)
+	          return +1;
+	        else if(secondary == arg.secondary)
+	          return 0;
+	      return -1;
+	    }
+	    public String toString() {
+	      return Character.toString(primary) +
+	        secondary + ": " + item;
+	    }
+	  }
+	  public void add(String td, char pri, int sec) {
+	    super.add(new ToDoItem(td, pri, sec));
+	  }
+	  public static void main(String[] args) {
+	    ToDoList toDoList = new ToDoList();
+	    toDoList.add("Empty trash", 'C', 4);
+	    toDoList.add("Feed dog", 'A', 2);
+	    toDoList.add("Feed bird", 'B', 7);
+	    toDoList.add("Mow lawn", 'C', 3);
+	    toDoList.add("Water lawn", 'A', 1);
+	    toDoList.add("Feed cat", 'B', 1);
+	    while(!toDoList.isEmpty())
+	      System.out.println(toDoList.remove());
+	  }
+	}
+**Output:**
+>A1: Water lawn
+
+>A2: Feed dog
+
+>B1: Feed cat
+
+>B7: Feed bird
+
+>C3: Mow lawn
+
+>C4: Empty trash
+
+ В приоритетных очередях упорядочение элементов происходит автоматически.
+
+###Деки
+
+ *Дек* (двусторонняя очередь) ведет себя как очередь, но с возможностью добавления и удаления элементов с обоих концов. В LinkedList имеются методы поддержки операций дека, но явно определенного интерфейса для деков в стандартных библиотеках Java не существует. Таким образом, LinkedList не может реализовать этот интерфейс, и вы не можете выполнить восходящее преобразование к интерфейсу Deque. Впрочем, класс Deque можно создать посредством композиции и просто предоставить доступ к соответствующим методам из LinkedList:
+	
+	//: net/mindview/util/Deque.java
+	// Creating a Deque from a LinkedList.
+	package net.mindview.util;
+	import java.util.*;
+	
+	public class Deque<T> {
+	  private LinkedList<T> deque = new LinkedList<T>();
+	  public void addFirst(T e) { deque.addFirst(e); }
+	  public void addLast(T e) { deque.addLast(e); }
+	  public T getFirst() { return deque.getFirst(); }
+	  public T getLast() { return deque.getLast(); }
+	  public T removeFirst() { return deque.removeFirst(); }
+	  public T removeLast() { return deque.removeLast(); }
+	  public int size() { return deque.size(); }
+	  public String toString() { return deque.toString(); }
+	  // And other methods as necessary...
+	}
+
+###Карты (Map)
+
+ Стандартная библиотека Java содержит различные типы карт: классы HashMap, TreeMap, LinkedHashMap, WeakHashMap, ConcurrentHashMap и IdentityHashMap. Они имеют одинаковый интерфейс (поскольку все реализуют интерфейс Map), но отличаются в производительности, порядке добавления и представления пар объектов, сроках хранения объектов и способах сравнения ключей.
+
+ Количество реализаций интерфейса Map убедительно свидетельствует о важности этой разновидности контейнеров.
+
+####Производительность
+
+ Для карт очень важен вопрос производительности. Например, использование линейного поиска в get() при поиске ключа - достаточно медленный процесс. Карта HashMap значительно увеличивает скорость такого поиска. Вместо неторопливого поиска ключа она работает со специальным значением, называемым *хеш-кодом*. Хеш-код - это способ преобразования некоторой информации об объекте в "относительно уникальное" целое число, связанное с этим объектом. Метод hashCode() встроен в корневой класс Object, поэтому хеш-код может генерироваться для любых объектов Java. Карта HashMap задействует метод hashCode() для быстрого поиска ключа.
+
+
+|Название класса/интерфейса|Описание|
+|--------------------------|--------|
+|HashMap|Реализация карты на основе хеш-таблицы. Поиск и вставка занимает небольшое постоянное время. Производительность можно настроить, указав в конструкторах особые значения для емкости и коэффициента загрукзи|
+|LinkedHashMap|Похоже на HashMap, однако при перебое выдает пары в порядке их добавления, или согласно принципу LRU ("наименее используемые идут первыми"). Лишь немногим медленнее HashMap, за исключением процесса перечисления элементов, где она быстрее за счет внутреннего связанного списка, отвечающего за хранение порядка добавления элементов|
+|TreeMap|Реализация карты на базе красно-черного дерева. При просмотре ключей или пар видно, что они соблюдают определенный порядок (который определяется интерфейсами Comparable или Comparator). Область применения карты TreeMap - выдача результатов в отсортированном виде. Карта TreeMap - единственная карта с методом subMap(), который позволяет выделять из карты некоторую ее часть|
+|WeakHashMap|Карта, состоящая из "слабых" ключей, которые не препятствуют освобождению объектов, на которые ссылается карта; разработана для решения определенного класса задач. Если за пределами карты ссылок на ключ нет, он может быть удален уборщиком мусора|
+|ConcurrentHashMap|Потоково-безопасная версия Map, не использующая синхронизационную блокировку|
+|IdentityHashMap|Хеш-таблица, использующая для сравнения оператор == вместо метода equals().|
+
+ Требования к ключам, используемым в Map, не отличаются от требований к элементам Set.
+
+####SortedMap
+
+ Если вы используете отсортированную карту типа SortedMap (к ней относится один класс TreeMap), все ключи гарантированно следуют в определенном порядке, что позволяет определить в интерфейсе SortedMap несколько дополнительных методов.
+
+ - Comparator comparator()
+ - T firstKey()
+ - T lastKey()
+ - SortedMap subMap(fromKey, toKey)
+ - SortedMap headMap(toKey)
+ - SortedMap tailMap(fromKey)
+
+
+ Пример:
+
+	//: containers/SortedMapDemo.java
+	// What you can do with a TreeMap.
+	import java.util.*;
+	import net.mindview.util.*;
+	import static net.mindview.util.Print.*;
+	
+	public class SortedMapDemo {
+	  public static void main(String[] args) {
+	    TreeMap<Integer,String> sortedMap =
+	      new TreeMap<Integer,String>(new CountingMapData(10));
+	    print(sortedMap);
+	    Integer low = sortedMap.firstKey();
+	    Integer high = sortedMap.lastKey();
+	    print(low);
+	    print(high);
+	    Iterator<Integer> it = sortedMap.keySet().iterator();
+	    for(int i = 0; i <= 6; i++) {
+	      if(i == 3) low = it.next();
+	      if(i == 6) high = it.next();
+	      else it.next();
+	    }
+	    print(low);
+	    print(high);
+	    print(sortedMap.subMap(low, high));
+	    print(sortedMap.headMap(high));
+	    print(sortedMap.tailMap(low));
+	  }
+	}
+**Output:**
+>{0=A0, 1=B0, 2=C0, 3=D0, 4=E0, 5=F0, 6=G0, 7=H0, 8=I0, 9=J0}
+
+>0
+
+>9
+
+>3
+
+>7
+
+>{3=D0, 4=E0, 5=F0, 6=G0}
+
+>{0=A0, 1=B0, 2=C0, 3=D0, 4=E0, 5=F0, 6=G0}
+
+>{3=D0, 4=E0, 5=F0, 6=G0, 7=H0, 8=I0, 9=J0}
+
+####LinkedHashSet
+
+ Производит хеширование для ускорения работы, но при этом также поддерживает порядок вставки пар объектов при переборе. 
+
+####Хеширование и хеш-код
+
+ Часто ошибки происходят, когда разработчик сам пишет класс, который должен стать ключом HashMap, и забывает реализовать весь необходимый служебный код. 
+
+ Необходимо переопределить методы hashCode(), а также метод equals().
+
+ "Правильный" метод equals() должен удовлетворять следующим пяти условиям:
+
+ - рефликсивность: для любого x вызов x.equals(x) должен возвращать true;
+ - симметричность: для любых x и y вызов x.equals(y) должен возвращать true, если и только если y.equals(x) возвращает true;
+ - транзитивность: для любых x,y и z, если x.equls(y) возвращает true и y.equals(z) возвращает true, тогда x.equals(z) должно вернуть true;
+ - стабильность: для любыч x и y многократные вызовы x.equals(y) согласованно возвращают true или согласованно возвращают false
+ - для любых x, отличных от null, x.equals(null) должно возвращать false.
+
+ Метод equals() в классе Object по умолчанию сводится к сравнению адресов.
+
+ 
