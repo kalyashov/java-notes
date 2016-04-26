@@ -7599,3 +7599,205 @@ getInterface – реализуемые интерфейсы
 
 ##19 глава. Перечислимые типы
 
+ Ключевое слово enum создает новый тип с ограниченным набором именованных значений. Перечисление требует, чтобы все его элементы были уникальны.
+
+###Основные возможности перечислений
+
+ Вызвав для enum метод values() можно получить массив констант перечисления в порядке их объявления.
+ 
+ При создании перечисления компилятор генерирует соответствующий класс. Этот класс автоматически наследует от класса java.lang.Enum.
+
+ Экземпляры всегда можно безопасно сравнивать с оператором ==, а методы equals() и hashCode() автоматически создаются за вас. Класс Enum реализует интерфейсы Comparable, Serializable.
+
+	//: enumerated/Spiciness.java
+	package enumerated;
+	
+	public enum Spiciness {
+	  NOT, MILD, MEDIUM, HOT, FLAMING
+	} 
+ 
+
+	//: enumerated/Burrito.java
+	package enumerated;
+	import static enumerated.Spiciness.*;
+	
+	public class Burrito {
+	  Spiciness degree;
+	  public Burrito(Spiciness degree) { this.degree = degree;}
+	  public String toString() { return "Burrito is "+ degree;}
+	  public static void main(String[] args) {
+	    System.out.println(new Burrito(NOT));
+	    System.out.println(new Burrito(MEDIUM));
+	    System.out.println(new Burrito(HOT));
+	  }
+	}
+
+**Output:**
+Burrito is NOT
+Burrito is MEDIUM
+Burrito is HOT
+
+ Директива import static вводит все идентификаторы экземпляров перечисления в локальное пространство имен, чтобы они не требовали уточнения.
+
+###Добавление методов к перечислению
+
+ Перечисление не может использоваться при наследовании, но в остальном оно работает как обычный класс. Это означает, что в перечисление можно добавлять новые методы. Более того, перечисление даже может содержать метод main().
+
+ Пример:
+
+	//: enumerated/OzWitch.java
+	// The witches in the land of Oz.
+	import static net.mindview.util.Print.*;
+	
+	public enum OzWitch {
+	  // Instances must be defined first, before methods:
+	  WEST("Miss Gulch, aka the Wicked Witch of the West"),
+	  NORTH("Glinda, the Good Witch of the North"),
+	  EAST("Wicked Witch of the East, wearer of the Ruby " +
+	    "Slippers, crushed by Dorothy's house"),
+	  SOUTH("Good by inference, but missing");
+	  private String description;
+	  // Constructor must be package or private access:
+	  private OzWitch(String description) {
+	    this.description = description;
+	  }
+	  public String getDescription() { return description; }
+	  public static void main(String[] args) {
+	    for(OzWitch witch : OzWitch.values())
+	      print(witch + ": " + witch.getDescription());
+	  }
+	}
+
+**Output:**
+>WEST: Miss Gulch, aka the Wicked Witch of the West
+
+>NORTH: Glinda, the Good Witch of the North
+
+>EAST: Wicked Witch of the East, wearer of the Ruby 
+
+>Slippers, crushed by Dorothy's house
+
+>SOUTH: Good by inference, but missing
+
+###Перечисления в командах switch
+
+ В секции case не обязательно использовать запись вида Перечисление.свойство:
+
+	enum Signal {GREEN, RED,}
+	...
+	Signal color = Signal.RED;
+	
+	switch(color) {
+		case GREEN: break;
+		case RED: break;
+	}
+
+###Реализация, а не наследование
+
+ Все перечисления расширяют java.lang.Enum. Перечисление не может быть создано посредством наследования:
+
+	enum NotPossible extend Pet {... // Не работает
+
+ Однако можно создать перечисление, реализующее один или несколько интерфейсов.
+
+###Использование интерфейсов для организации кода
+
+ Допустим, вы хотите создать перечисления для разных видов еды, но при этом каждое из них должно оставаться частным случаем типа Food. Категории можно реализовать группировкой элементов внутри интерфейса и созданием перечисления на основе этого интерфейса:
+
+	//: enumerated/menu/Food.java
+	// Subcategorization of enums within interfaces.
+	package enumerated.menu;
+	
+	public interface Food {
+	  enum Appetizer implements Food {
+	    SALAD, SOUP, SPRING_ROLLS;
+	  }
+	  enum MainCourse implements Food {
+	    LASAGNE, BURRITO, PAD_THAI,
+	    LENTILS, HUMMOUS, VINDALOO;
+	  }
+	  enum Dessert implements Food {
+	    TIRAMISU, GELATO, BLACK_FOREST_CAKE,
+	    FRUIT, CREME_CARAMEL;
+	  }
+	  enum Coffee implements Food {
+	    BLACK_COFFEE, DECAF_COFFEE, ESPRESSO,
+	    LATTE, CAPPUCCINO, TEA, HERB_TEA;
+	  }
+	} 
+
+ Все экземпляры перечисления являются подтипом Food:
+
+	//: enumerated/menu/TypeOfFood.java
+	package enumerated.menu;
+	import static enumerated.menu.Food.*;
+	
+	public class TypeOfFood {
+	  public static void main(String[] args) {
+	    Food food = Appetizer.SALAD;
+	    food = MainCourse.LASAGNE;
+	    food = Dessert.GELATO;
+	    food = Coffee.CAPPUCCINO;
+	  }
+	} 
+
+###EnumSet
+
+ EnumSet - класс схожий с Set, и созданный для использования в нем элементов Enum классов. Естественно все эллементы находящиеся в EnumSet, должны быть из единственного перечислимого типа, который определяется, явно или неявно, когда набор создается. В EnumSet нулевые элементы не разрешаются, а попытки вставить нулевой элемент бросят Exception. 
+
+ Но, к сожалению, проверки на наличие нулевого элемента будут работать должным образом.
+ Как и говорилось EnumSet очень схож с обычным Set, поэтому достаточно рассмотреть только примеры инициализации EnumSet:
+
+ - **EnumSet<T> EnumSet.allOf(T.class)** - создает EnumSet, содержащий все элементы из указанного класса.
+ - **EnumSet<T> EnumSet.copyOf(Collection<T> t)** - Создает EnumSet, содержащий все элементы находящиеся в колекции.
+ - **EnumSet<T> EnumSet.copyOf(EnumSet<T> s)** - Создает EnumSet содержащий те же элементы.
+ - **EnumSet<T> EnumSet.complementOf(EnumSet<T> s)** -Создает EnumSet с тем же типом данных как и у указанного EnumSet, но содержащий элементы не входящие в указанный набор.
+ - **EnumSet<T> EnumSet.noneOf(T.class)** - Создает пустой EnumSet, но сразу определяет для него тип используемых в нем данных в последующей работе с ним.
+ - **EnumSet<T> EnumSet.of(e1, e2, e3...)** - Создает EnumSet, первоначально содержащий указанные элементы.
+ - **EnumSet<T> EnumSet.range(from, to)** - Создает EnumSet, первоначально содержащий все элементы в диапазоне от первого указанного элемента до второго указанного элемента.
+
+###EnumMap
+
+ EnumMap - это специализированный класс Map, для работы с Enum. В EnumMap все происходит аналогично. Все Элементы должны быть из единственного перечислимого типа. Элементы так же хранятся в их естественном порядке(порядок в котором хранятся элементы в Enum классе). И так же не доступен нулевой эллемент, попытки вставить его бросят Exception.
+
+ Рассмотрим примеры создания EnumMap :
+
+ - EnumMap<K,V>(K.class) -  создает пустой EnumMap, и определяет для него тип хранящихся ключей.
+ - EnumMap<K,V>(EnumMap<K,V>)  -  создает EnumMap являющийся копией данного.
+ - EnumMap<K,V>(Map<K,V>)  -  создает EnumMap, инициализируемую по данной Map.
+
+###Методы констант
+
+ Перечисления Java обладают очень интересной возможностью, которая позволяет назначить каждому экземпляру перечисления свое поведение. Для этого следует определить один или несколько абстрактных методов в составе перечисления, а затем определить методы для каждого экземпляра перечисления:
+
+	/: enumerated/ConstantSpecificMethod.java
+	import java.util.*;
+	import java.text.*;
+	
+	public enum ConstantSpecificMethod {
+	  DATE_TIME {
+	    String getInfo() {
+	      return
+	        DateFormat.getDateInstance().format(new Date());
+	    }
+	  },
+	  CLASSPATH {
+	    String getInfo() {
+	      return System.getenv("CLASSPATH");
+	    }
+	  },
+	  VERSION {
+	    String getInfo() {
+	      return System.getProperty("java.version");
+	    }
+	  };
+	  abstract String getInfo();
+	
+	  public static void main(String[] args) {
+	    for(ConstantSpecificMethod csm : values())
+	      System.out.println(csm.getInfo());
+	  }
+	} 
+
+###20 глава. Аннотации
+
