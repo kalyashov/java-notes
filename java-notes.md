@@ -8149,535 +8149,532 @@ Waiting for LiftOff
 
  Другим способом управления вашими потоками является вызов метода sleep(), который переводит поток в состояние ожидания на заданное количество миллисекунд. Если в классе LiftOff заменить вызов yield() на вызов метода sleep(), будет получен следующий результат:
 
-//: concurrency/SleepingTask.java
-// Вызов sleep() для приостановки потока.
-import java.util.concurrent.*;
+	//: concurrency/SleepingTask.java
+	// Вызов sleep() для приостановки потока.
+	import java.util.concurrent.*;
+	 
+	public class SleepingTask extends LiftOff {
+	  public void run() {
+	    try {
+	      while(countDown-- > 0) {
+	        System.out.print(status());
+	        // Старый стиль.
+	        // Thread.sleep(l00);
+	        // Стиль Java SE5/6:
+	        TimeUnit.MILLISECONDS.sleep(100);
+	      }
+	    } catch(InterruptedException e) {
+	      System.err.println("Interrupted");
+	    }
+	  }
+	  public static void main(String[] args) {
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    for(int i = 0; i < 5; i++)
+	      exec.execute(new SleepingTask());
+	    exec.shutdown();
+	  }
+	}
+
+**Output:**
+
+>'#0(9), #1(9), #2(9), #3(9), #4(9), #0(8), #1(8), #2(8), #3(8), #4(8), #0(7),
+
+>'#1(7), #2(7), #3(7), #4(7), #0(6), #1(6), #2(6), #3(6), #4(6), #0(5), #1(5),
+
+>'#2(5), #3(5), #4(5), #0(4), #1(4), #2(4), #3(4), #4(4), #0(3), #1(3), #2(3),
+
+>'#3(3), #4(3), #0(2), #1(2), #2(2), #3(2), #4(2), #0(1), #1(1), #2(1), #3(1),
+
+>'#4(1), #0(Liftoff!), #1(Liftoff!), #2(Liftoff!), #3(Liftoff!), #4(Liftoff!),
+
+ Вызов метода sleep() может привести к исключению InterruptedException; перехват этого исключения продемонстрирован в run(). Поскольку исключения не распространяются по потокам обратно в main(), вы должны локально обработать любые исключения, возникающие внутри задачи.
+
+ В Java SE5 появилась новая версия sleep(), оформленная в виде метода класса TimeUnit; она продемонстрирована в приведенном примере. Она делает программу более наглядной, поскольку вы можете указать единицы измерения продолжительности задержки. Класс TimeUnit также может использоваться для выполнения преобразований, как будет показано далее в этой главе.
+
+ На некоторых платформах задачи выполняются в порядке «идеального распределения» — от 0 до 4, затем снова от 4 до 0. Это вполне логично, поскольку после каждой команды вывода задача переходит в состояние ожидания, что позволяет планировщику потоков переключиться на другой поток. Тем не менее такое поведение зависит от базовой реализации потокового механизма, поэтому полагаться на него нельзя. Если вам потребуется управлять порядком выполнения задач, используйте средства синхронизации (см. далее) или же вообще откажитесь от использования потоков и напишите собственные функции синхронизации, которые передают управление друг другу в нужном порядке.
+
+####Приоритет
+
+ *Приоритет (priority)* потока сообщает планировщику информацию об относительной важности потока. Хотя порядок обращения процессора к существующему набору потоков и не детерминирован, если существует несколько приостановленных потоков, одновременно ожидающих запуска, планировщик сначала запустит поток с большим приоритетом. Впрочем, это не значит, что потоки с младшими приоритетами не выполняются вовсе (то есть тупиковых ситуаций из-за приоритетов не возникает). Потоки с более низкими приоритетами просто запускаются чуть реже.
+
+ В подавляющем большинстве случаев все потоки должны выполняться со стандартным приоритетом. Любые попытки манипуляций с приоритетами обычно являются ошибкой.
+
+ Следующий пример демонстрирует использование приоритетов. Приоритет существующего потока читается методом getPriority() и задается методом setPriority():
+
+	//: concurrency/SimplePriorities.java
+	// Использование приоритетов потоков.
+	import java.util.concurrent.*;
+	 
+	public class SimplePriorities implements Runnable {
+	  private int countDown = 5;
+	  private volatile double d; // Без оптимизации 
+	  private int priority;
+	  public SimplePriorities(int priority) {
+	    this.priority = priority;
+	  }
+	  public String toString() {
+	    return Thread.currentThread() + ": " + countDown;
+	  }
+	  public void run() {
+	    Thread.currentThread().setPriority(priority);
+	    while(true) {
+	      // Высокозатратная, прерываемая операция:
+	      for(int i = 1; i < 100000; i++) {
+	        d += (Math.PI + Math.E) / (double)i;
+	        if(i % 1000 == 0)
+	          Thread.yield();
+	      }
+	      System.out.println(this);
+	      if(--countDown == 0) return;
+	    }
+	  }
+	  public static void main(String[] args) {
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    for(int i = 0; i < 5; i++)
+	      exec.execute(
+	        new SimplePriorities(Thread.MIN_PRIORITY));
+	    exec.execute(
+	        new SimplePriorities(Thread.MAX_PRIORITY));
+	    exec.shutdown();
+	  }
+	}
+
+**Output:**
+
+>Thread[pool-1-thread-6,10,main]: 5
+
+>Thread[pool-1-thread-6,10,main]: 4
+
+>Thread[pool-1-thread-6,10,main]: 3
+
+>Thread[pool-1-thread-6,10,main]: 2
+
+>Thread[pool-1-thread-6,10,main]: 1
+
+>Thread[pool-1-thread-3,1,main]: 5
+
+>Thread[pool-1-thread-2,1,main]: 5
+
+>Thread[pool-1-thread-1,1,main]: 5
+
+>Thread[pool-1-thread-5,1,main]: 5
+
+>Thread[pool-1-thread-4,1,main]: 5
+
+ В этой версии метод toString() переопределяется и использует метод Thread. toString(), который выводит имя потока (его можно задать в конструкторе, но здесь имена автоматически генерируются в виде pool-1-thread-1, pool-1-thread-2 и т. д.), приоритет и группу, к которой принадлежит поток. Переопределенная версия toString() также выводит обратный отсчет, выполняемый задачей. Обратите внимание: для получения ссылки на объект Thread, управляющий задачей, внутри самой задачи, следует вызвать метод Thread.currentThread().
+
+ Мы видим, что приоритет последнего потока имеет наивысший уровень, а все остальные потоки находятся на низшем уровне. Учтите, что приоритет задается в начале выполнения run(); задавать его в конструкторе бессмысленно, потому что Executor в этот момент еще не начал выполнять задачу.
+
+ В метод run() были добавлены 100 000 достаточно затратных операций с плавающей запятой, включая суммирование и деление с числом двойной точности double. Переменная d была отмечена как volatile, чтобы компилятор не применял оптимизацию. Без этих вычислений вы не увидите эффекта установки различных приоритетов (попробуйте закомментировать цикл for с вычислениями). В процессе вычислений мы видим, что планировщик уделяет больше внимания потоку с приоритетом MAX_PRIORITY (по крайней мере, таково было поведение программы на машине под управлением Windows ХР). Несмотря даже на то, что вывод на консоль также является «дорогостоящей» операцией, с ним вы не увидите влияние уровней приоритетов, поскольку вывод на консоль не прерывается (иначе экран был бы заполнен несуразицей), в то время как математические вычисления, приведенные выше, прерывать допустимо. Вычисления выполняются достаточно долго, соответственно, механизм планирования потоков вмешивается в процесс и чередует потоки, проявляя при этом внимание к более приоритетным. Тем не менее для обеспечения переключения контекста в программе периодически выполняются команды yield().
+
+ В пакете JDK предусмотрено 10 уровней приоритетов, однако это не слишком хорошо согласуется с большинством операционных систем. К примеру, в Windows имеется 7 классов приоритетов, таким образом, их соотношение неочевидно (хотя в операционной системе Sun Solaris имеется 231 уровней). Переносимость обеспечивается только использованием универсальных констант МАХ_РRIORITY, NORM_PRIORITY и MIN_PRI0RITY.
+
+
+####Передача управления
+
+ Если вы знаете, что в текущей итерации run()   сделано все необходимое, вы можете подсказать механизму планирования потоков, что процессором теперь может воспользоваться другой поток. Эта подсказка (не более чем рекомендация; нет никакой гарантии, что планировщик потоков «прислушается» к ней) воплощается в форме вызова метода yield(). Вызывая yield(), вы сообщаете системе, что в ней могут выполняться другие потоки того же приоритета.
+
+ В примере LiftOff метод yield() обеспечивает равномерное распределение вычислительных ресурсов между задачами LiftOff. Попробуйте закомментировать вызов Thread.yield() в Lift0ff.run() и проследите за различиями. И все же, в общем случае не стоит полагаться на yield() как на серьезное средство настройки вашего приложения.
+
+####Потоки-демоны
+
+ Демоном называется поток, предоставляющий некоторый сервис, работая в фоновом режиме во время выполнения программы, но при этом не является ее неотъемлемой частью. Таким образом, когда все потоки не-демоны заканчивают свою деятельность, программа завершается. И наоборот, если существуют работающие потоки не-демоны, программа продолжает выполнение. Существует, например, поток не-демон, выполняющий метод main().
+
+	//: concurrency/SimpleDaemons.java
+	// Потоки-демоны не препятствуют завершению работы программы.
+	import java.util.concurrent.*;
+	import static net.mindview.util.Print.*;
+	 
+	public class SimpleDaemons implements Runnable {
+	  public void run() {
+	    try {
+	      while(true) {
+	        TimeUnit.MILLISECONDS.sleep(100);
+	        print(Thread.currentThread() + " " + this);
+	      }
+	    } catch(InterruptedException e) {
+	      print("sleep() interrupted");
+	    }
+	  }
+	  public static void main(String[] args) throws Exception {
+	    for(int i = 0; i < 10; i++) {
+	      Thread daemon = new Thread(new SimpleDaemons());
+	      daemon.setDaemon(true); // Необходимо вызвать перед start()
+	      daemon.start();
+	    }
+	    print("All daemons started");
+	    TimeUnit.MILLISECONDS.sleep(175);
+	  }
+	}
+
+**Output:**
+
+>All daemons started
+
+>Thread[Thread-0,5,main] SimpleDaemons@530daa
+
+>Thread[Thread-1,5,main] SimpleDaemons@a62fc3
+
+>Thread[Thread-2,5,main] SimpleDaemons@89ae9e
+
+>Thread[Thread-3,5,main] SimpleDaemons@1270b73
+
+>Thread[Thread-4,5,main] SimpleDaemons@60aeb0
+
+>Thread[Thread-5,5,main] SimpleDaemons@16caf43
+
+>Thread[Thread-6,5,main] SimpleDaemons@66848c
+
+>Thread[Thread-7,5,main] SimpleDaemons@8813f2
+
+>Thread[Thread-8,5,main] SimpleDaemons@1d58aae
+
+>Thread[Thread-9,5,main] SimpleDaemons@83cc67
+
+>...
+
+ Чтобы назначить поток демоном, следует перед его запуском вызвать метод setDaemon().
+
+ После того как main() завершит свою работу, ничто не препятствует завершению программы, поскольку в процессе не работают другие потоки, кроме демонов. Чтобы результаты запуска всех потоков-демонов были более наглядными, поток main() на некоторое время погружается в «сон». Без этого вы увидели бы только часть результатов при создании демонов. (Поэкспериментируйте с вызовом sleep() для интервалов разной продолжительности.)
+
+ В примере SimpleDaemons.java используется явное создание объектов Thread для установки их «демонского» флага. Вы также можете настроить атрибуты (демон, приоритет, имя) потоков, созданных исполнителем; для этого следует написать пользовательскую реализацию ThreadFactory:
+
+	//: net/mindview/util/DaemonThreadFactory.java
+	package net.mindview.util;
+	import java.util.concurrent.*;
+	 
+	public class DaemonThreadFactory implements ThreadFactory {
+	  public Thread newThread(Runnable r) {
+	    Thread t = new Thread(r);
+	    t.setDaemon(true);
+	    return t;
+	  }
+	}
  
-public class SleepingTask extends LiftOff {
-  public void run() {
-    try {
-      while(countDown-- > 0) {
-        System.out.print(status());
-        // Старый стиль.
-        // Thread.sleep(l00);
-        // Стиль Java SE5/6:
-        TimeUnit.MILLISECONDS.sleep(100);
-      }
-    } catch(InterruptedException e) {
-      System.err.println("Interrupted");
-    }
-  }
-  public static void main(String[] args) {
-    ExecutorService exec = Executors.newCachedThreadPool();
-    for(int i = 0; i < 5; i++)
-      exec.execute(new SleepingTask());
-    exec.shutdown();
-  }
-}
-<spoiler text="Output:">
+ Единственное отличие от обычной реализации ThreadFactory заключается в том, что в данном случае атрибут демона задается равным true. Теперь новый объект DaemonThreadFactory передается в аргументе Executors.newCachedThreadPool():
 
-#0(9), #1(9), #2(9), #3(9), #4(9), #0(8), #1(8), #2(8), #3(8), #4(8), #0(7),
-#1(7), #2(7), #3(7), #4(7), #0(6), #1(6), #2(6), #3(6), #4(6), #0(5), #1(5),
-#2(5), #3(5), #4(5), #0(4), #1(4), #2(4), #3(4), #4(4), #0(3), #1(3), #2(3),
-#3(3), #4(3), #0(2), #1(2), #2(2), #3(2), #4(2), #0(1), #1(1), #2(1), #3(1),
-#4(1), #0(Liftoff!), #1(Liftoff!), #2(Liftoff!), #3(Liftoff!), #4(Liftoff!),
-</spoiler> Вызов метода sleep() может привести к исключению InterruptedException; перехват этого исключения продемонстрирован в run(). Поскольку исключения не распространяются по потокам обратно в main(), вы должны локально обработать любые исключения, возникающие внутри задачи.
+	//: concurrency/DaemonFromFactory.java
+	// Использование ThreadFactory для создания демонов.
+	import java.util.concurrent.*;
+	import net.mindview.util.*;
+	import static net.mindview.util.Print.*;
+	 
+	public class DaemonFromFactory implements Runnable {
+	  public void run() {
+	    try {
+	      while(true) {
+	        TimeUnit.MILLISECONDS.sleep(100);
+	        print(Thread.currentThread() + " " + this);
+	      }
+	    } catch(InterruptedException e) {
+	      print("Interrupted");
+	    }
+	  }
+	  public static void main(String[] args) throws Exception {
+	    ExecutorService exec = Executors.newCachedThreadPool(
+	      new DaemonThreadFactory());
+	    for(int i = 0; i < 10; i++)
+	      exec.execute(new DaemonFromFactory());
+	    print("All daemons started");
+	    TimeUnit.MILLISECONDS.sleep(500); // Задержка
+	  }
+	} /* (Execute to see output) *///:~
 
-В Java SE5 появилась новая версия sleep(), оформленная в виде метода класса TimeUnit; она продемонстрирована в приведенном примере. Она делает программу более наглядной, поскольку вы можете указать единицы измерения продолжительности задержки. Класс TimeUnit также может использоваться для выполнения преобразований, как будет показано далее в этой главе.
+ Каждый статический метод создания ExecutorService перегружается для получения объекта ThreadFactory, который будет использоваться для создания новых потоков.
 
-На некоторых платформах задачи выполняются в порядке «идеального распределения» — от 0 до 4, затем снова от 4 до 0. Это вполне логично, поскольку после каждой команды вывода задача переходит в состояние ожидания, что позволяет планировщику потоков переключиться на другой поток. Тем не менее такое поведение зависит от базовой реализации потокового механизма, поэтому полагаться на него нельзя. Если вам потребуется управлять порядком выполнения задач, используйте средства синхронизации (см. далее) или же вообще откажитесь от использования потоков и напишите собственные функции синхронизации, которые передают управление друг другу в нужном порядке.
+ Сделаем еще один шаг — создадим вспомогательный класс DaemonThreadPoolExecutor:
 
+	//: net/mindview/util/DaemonThreadPoolExecutor.java
+	package net.mindview.util;
+	import java.util.concurrent.*;
+	 
+	public class DaemonThreadPoolExecutor
+	extends ThreadPoolExecutor {
+	  public DaemonThreadPoolExecutor() {
+	    super(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
+	      new SynchronousQueue<Runnable>(),
+	      new DaemonThreadFactory());
+	  }
+	}
 
-Приоритет
-Приоритет (priority) потока сообщает планировщику информацию об относительной важности потока. Хотя порядок обращения процессора к существующему набору потоков и не детерминирован, если существует несколько приостановленных потоков, одновременно ожидающих запуска, планировщик сначала запустит поток с большим приоритетом. Впрочем, это не значит, что потоки с младшими приоритетами не выполняются вовсе (то есть тупиковых ситуаций из-за приоритетов не возникает). Потоки с более низкими приоритетами просто запускаются чуть реже.
+ Чтобы узнать, какие значения должны передаваться при вызове конструктора базового класса, я просто заглянул в исходный код Executors.java.
 
-В подавляющем большинстве случаев все потоки должны выполняться со стандартным приоритетом. Любые попытки манипуляций с приоритетами обычно являются ошибкой.
+ Чтобы узнать, является ли поток демоном, вызовите метод isDaemon(). Если поток является демоном, то все потоки, которые он производит, также будут демонами.
 
-Следующий пример демонстрирует использование приоритетов. Приоритет существующего потока читается методом getPriority() и задается методом setPriority():
+ Учтите, что потоки-демоны завершают свои методы run() без выполнения секций finally:
 
-//: concurrency/SimplePriorities.java
-// Использование приоритетов потоков.
-import java.util.concurrent.*;
- 
-public class SimplePriorities implements Runnable {
-  private int countDown = 5;
-  private volatile double d; // Без оптимизации 
-  private int priority;
-  public SimplePriorities(int priority) {
-    this.priority = priority;
-  }
-  public String toString() {
-    return Thread.currentThread() + ": " + countDown;
-  }
-  public void run() {
-    Thread.currentThread().setPriority(priority);
-    while(true) {
-      // Высокозатратная, прерываемая операция:
-      for(int i = 1; i < 100000; i++) {
-        d += (Math.PI + Math.E) / (double)i;
-        if(i % 1000 == 0)
-          Thread.yield();
-      }
-      System.out.println(this);
-      if(--countDown == 0) return;
-    }
-  }
-  public static void main(String[] args) {
-    ExecutorService exec = Executors.newCachedThreadPool();
-    for(int i = 0; i < 5; i++)
-      exec.execute(
-        new SimplePriorities(Thread.MIN_PRIORITY));
-    exec.execute(
-        new SimplePriorities(Thread.MAX_PRIORITY));
-    exec.shutdown();
-  }
-}
-<spoiler text="Output:"> (70% match)
+	//: concurrency/DaemonsDontRunFinally.java
+	// Потоки-демоны не выполняют секцию finally.
+	import java.util.concurrent.*;
+	import static net.mindview.util.Print.*;
+	 
+	class ADaemon implements Runnable {
+	  public void run() {
+	    try {
+	      print("Starting ADaemon");
+	      TimeUnit.SECONDS.sleep(1);
+	    } catch(InterruptedException e) {
+	      print("Exiting via InterruptedException");
+	    } finally {
+	      print("This should always run?");
+	    }
+	  }
+	}
+	 
+	public class DaemonsDontRunFinally {
+	  public static void main(String[] args) throws Exception {
+	    Thread t = new Thread(new ADaemon());
+	    t.setDaemon(true);
+	    t.start();
+	  }
+	}
 
-Thread[pool-1-thread-6,10,main]: 5
-Thread[pool-1-thread-6,10,main]: 4
-Thread[pool-1-thread-6,10,main]: 3
-Thread[pool-1-thread-6,10,main]: 2
-Thread[pool-1-thread-6,10,main]: 1
-Thread[pool-1-thread-3,1,main]: 5
-Thread[pool-1-thread-2,1,main]: 5
-Thread[pool-1-thread-1,1,main]: 5
-Thread[pool-1-thread-5,1,main]: 5
-Thread[pool-1-thread-4,1,main]: 5
-</spoiler> В этой версии метод toString() переопределяется и использует метод Thread. toString(), который выводит имя потока (его можно задать в конструкторе, но здесь имена автоматически генерируются в виде pool-1-thread-1, pool-1-thread-2 и т. д.), приоритет и группу, к которой принадлежит поток. Переопределенная версия toString() также выводит обратный отсчет, выполняемый задачей. Обратите внимание: для получения ссылки на объект Thread, управляющий задачей, внутри самой задачи, следует вызвать метод Thread.currentThread().
+**Output:**
+>Starting ADaemon
 
-Мы видим, что приоритет последнего потока имеет наивысший уровень, а все остальные потоки находятся на низшем уровне. Учтите, что приоритет задается в начале выполнения run(); задавать его в конструкторе бессмысленно, потому что Executor в этот момент еще не начал выполнять задачу.
+ Запуск программы наглядно показывает, что секция finally не выполняется. С другой стороны, если закомментировать вызов setDaemon(), вы увидите, что секция finally была выполнена.
 
-В метод run() были добавлены 100 000 достаточно затратных операций с плавающей запятой, включая суммирование и деление с числом двойной точности double. Переменная d была отмечена как volatile, чтобы компилятор не применял оптимизацию. Без этих вычислений вы не увидите эффекта установки различных приоритетов (попробуйте закомментировать цикл for с вычислениями). В процессе вычислений мы видим, что планировщик уделяет больше внимания потоку с приоритетом MAX_PRIORITY (по крайней мере, таково было поведение программы на машине под управлением Windows ХР). Несмотря даже на то, что вывод на консоль также является «дорогостоящей» операцией, с ним вы не увидите влияние уровней приоритетов, поскольку вывод на консоль не прерывается (иначе экран был бы заполнен несуразицей), в то время как математические вычисления, приведенные выше, прерывать допустимо. Вычисления выполняются достаточно долго, соответственно, механизм планирования потоков вмешивается в процесс и чередует потоки, проявляя при этом внимание к более приоритетным. Тем не менее для обеспечения переключения контекста в программе периодически выполняются команды yield().
+ Такое поведение верно, даже если из предыдущих описаний finally у вас сложилось обратное впечатление. Демоны завершаются «внезапно», при завершении последнего не-демона. Таким образом, сразу же при выходе из main() JVM немедленно прерывает работу всех демонов, не соблюдая никакие формальности. Невозможность корректного завершения демонов ограничивает возможности их применения. Обычно объекты Executor оказываются более удачным решением, потому что все задачи, находящиеся под управлением Executor, могут быть завершены одновременно.
 
-В пакете JDK предусмотрено 10 уровней приоритетов, однако это не слишком хорошо согласуется с большинством операционных систем. К примеру, в Windows имеется 7 классов приоритетов, таким образом, их соотношение неочевидно (хотя в операционной системе Sun Solaris имеется 231 уровней). Переносимость обеспечивается только использованием универсальных констант МАХ_РRIORITY, NORM_PRIORITY и MIN_PRI0RITY.
+####Разновидности реализации
 
+ Во всех предшествующих примерах все классы задач реализовали интерфейс Runnable. В очень простых случаях можно использовать альтернативное решение с прямым наследованием от Thread:
 
-Передача управления
-Если вы знаете, что в текущей итерации run() сделано все необходимое, вы можете подсказать механизму планирования потоков, что процессором теперь может воспользоваться другой поток. Эта подсказка (не более чем рекомендация; нет никакой гарантии, что планировщик потоков «прислушается» к ней) воплощается в форме вызова метода yield(). Вызывая yield(), вы сообщаете системе, что в ней могут выполняться другие потоки того же приоритета.
+	//: concurrency/SimpleThread.java
+	// Прямое наследование от класса Thread..
+	 
+	public class SimpleThread extends Thread {
+	  private int countDown = 5;
+	  private static int threadCount = 0;
+	  public SimpleThread() {
+	    // Store the thread name:
+	    super(Integer.toString(++threadCount));
+	    start();
+	  }
+	  public String toString() {
+	    return "#" + getName() + "(" + countDown + "), ";
+	  }
+	  public void run() {
+	    while(true) {
+	      System.out.print(this);
+	      if(--countDown == 0)
+	        return;
+	    }
+	  }
+	  public static void main(String[] args) {
+	    for(int i = 0; i < 5; i++)
+	      new SimpleThread();
+	  }
+	}
 
-В примере LiftOff метод yield() обеспечивает равномерное распределение вычислительных ресурсов между задачами LiftOff. Попробуйте закомментировать вызов Thread.yield() в Lift0ff.run() и проследите за различиями. И все же, в общем случае не стоит полагаться на yield() как на серьезное средство настройки вашего приложения.
+**Output:**
 
+>'#1(5), #1(4), #1(3), #1(2), #1(1), #2(5), #2(4), #2(3), #2(2), #2(1), #3(5),
 
-Потоки-демоны
-Демоном называется поток, предоставляющий некоторый сервис, работая в фоновом режиме во время выполнения программы, но при этом не является ее неотъемлемой частью. Таким образом, когда все потоки не-демоны заканчивают свою деятельность, программа завершается. И наоборот, если существуют работающие потоки не-демоны, программа продолжает выполнение. Существует, например, поток не-демон, выполняющий метод main().
+>'#3(4), #3(3), #3(2), #3(1), #4(5), #4(4), #4(3), #4(2), #4(1), #5(5), #5(4),
 
-//: concurrency/SimpleDaemons.java
-// Потоки-демоны не препятствуют завершению работы программы.
-import java.util.concurrent.*;
-import static net.mindview.util.Print.*;
- 
-public class SimpleDaemons implements Runnable {
-  public void run() {
-    try {
-      while(true) {
-        TimeUnit.MILLISECONDS.sleep(100);
-        print(Thread.currentThread() + " " + this);
-      }
-    } catch(InterruptedException e) {
-      print("sleep() interrupted");
-    }
-  }
-  public static void main(String[] args) throws Exception {
-    for(int i = 0; i < 10; i++) {
-      Thread daemon = new Thread(new SimpleDaemons());
-      daemon.setDaemon(true); // Необходимо вызвать перед start()
-      daemon.start();
-    }
-    print("All daemons started");
-    TimeUnit.MILLISECONDS.sleep(175);
-  }
-}
-<spoiler text="Output:"> (Sample)
+>'#5(3), #5(2), #5(1),
 
-All daemons started
-Thread[Thread-0,5,main] SimpleDaemons@530daa
-Thread[Thread-1,5,main] SimpleDaemons@a62fc3
-Thread[Thread-2,5,main] SimpleDaemons@89ae9e
-Thread[Thread-3,5,main] SimpleDaemons@1270b73
-Thread[Thread-4,5,main] SimpleDaemons@60aeb0
-Thread[Thread-5,5,main] SimpleDaemons@16caf43
-Thread[Thread-6,5,main] SimpleDaemons@66848c
-Thread[Thread-7,5,main] SimpleDaemons@8813f2
-Thread[Thread-8,5,main] SimpleDaemons@1d58aae
-Thread[Thread-9,5,main] SimpleDaemons@83cc67
-...
-</spoiler> Чтобы назначить поток демоном, следует перед его запуском вызвать метод setDaemon().
+ Чтобы задать объектам Thread имена, вы вызываете соответствующий конструктор Thread. Имя читается в методе toString() при помощи getName().
 
-После того как main() завершит свою работу, ничто не препятствует завершению программы, поскольку в процессе не работают другие потоки, кроме демонов. Чтобы результаты запуска всех потоков-демонов были более наглядными, поток main() на некоторое время погружается в «сон». Без этого вы увидели бы только часть результатов при создании демонов. (Поэкспериментируйте с вызовом sleep() для интервалов разной продолжительности.)
+ Также иногда встречается идиома самоуправляемой реализации Runnable:
 
-В примере SimpleDaemons.java используется явное создание объектов Thread для установки их «демонского» флага. Вы также можете настроить атрибуты (демон, приоритет, имя) потоков, созданных исполнителем; для этого следует написать пользовательскую реализацию ThreadFactory:
+	//: concurrency/SelfManaged.java
+	// Реализация Runnable. содержащая собственный объект Thread.
+	 
+	public class SelfManaged implements Runnable {
+	  private int countDown = 5;
+	  private Thread t = new Thread(this);
+	  public SelfManaged() { t.start(); }
+	  public String toString() {
+	    return Thread.currentThread().getName() +
+	      "(" + countDown + "), ";
+	  }
+	  public void run() {
+	    while(true) {
+	      System.out.print(this);
+	      if(--countDown == 0)
+	        return;
+	    }
+	  }
+	  public static void main(String[] args) {
+	    for(int i = 0; i < 5; i++)
+	      new SelfManaged();
+	  }
+	}
 
-//: net/mindview/util/DaemonThreadFactory.java
-package net.mindview.util;
-import java.util.concurrent.*;
- 
-public class DaemonThreadFactory implements ThreadFactory {
-  public Thread newThread(Runnable r) {
-    Thread t = new Thread(r);
-    t.setDaemon(true);
-    return t;
-  }
-}
-Единственное отличие от обычной реализации ThreadFactory заключается в том, что в данном случае атрибут демона задается равным true. Теперь новый объект DaemonThreadFactory передается в аргументе Executors.newCachedThreadPool():
+**Output:**
 
-//: concurrency/DaemonFromFactory.java
-// Использование ThreadFactory для создания демонов.
-import java.util.concurrent.*;
-import net.mindview.util.*;
-import static net.mindview.util.Print.*;
- 
-public class DaemonFromFactory implements Runnable {
-  public void run() {
-    try {
-      while(true) {
-        TimeUnit.MILLISECONDS.sleep(100);
-        print(Thread.currentThread() + " " + this);
-      }
-    } catch(InterruptedException e) {
-      print("Interrupted");
-    }
-  }
-  public static void main(String[] args) throws Exception {
-    ExecutorService exec = Executors.newCachedThreadPool(
-      new DaemonThreadFactory());
-    for(int i = 0; i < 10; i++)
-      exec.execute(new DaemonFromFactory());
-    print("All daemons started");
-    TimeUnit.MILLISECONDS.sleep(500); // Задержка
-  }
-} /* (Execute to see output) *///:~
-Каждый статический метод создания ExecutorService перегружается для получения объекта ThreadFactory, который будет использоваться для создания новых потоков.
+>Thread-0(5), Thread-0(4), Thread-0(3), Thread-0(2), Thread-0(1), Thread-1(5), Thread-1(4),
 
-Сделаем еще один шаг — создадим вспомогательный класс DaemonThreadPoolExecutor:
+>Thread-1(3), Thread-1(2), Thread-1(1), Thread-2(5), Thread-2(4), Thread-2(3), Thread-2(2),
 
-//: net/mindview/util/DaemonThreadPoolExecutor.java
-package net.mindview.util;
-import java.util.concurrent.*;
- 
-public class DaemonThreadPoolExecutor
-extends ThreadPoolExecutor {
-  public DaemonThreadPoolExecutor() {
-    super(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
-      new SynchronousQueue<Runnable>(),
-      new DaemonThreadFactory());
-  }
-}
-Чтобы узнать, какие значения должны передаваться при вызове конструктора базового класса, я просто заглянул в исходный код Executors.java.
+>Thread-2(1), Thread-3(5), Thread-3(4), Thread-3(3), 
 
-Чтобы узнать, является ли поток демоном, вызовите метод isDaemon(). Если поток является демоном, то все потоки, которые он производит, также будут демонами, что и демонстрируется следующим примером:
-
-//: concurrency/Daemons.java
-// Потоки, порождаемые демонами, также являются демонами
-// Daemon threads spawn other daemon threads.
-import java.util.concurrent.*;
-import static net.mindview.util.Print.*;
- 
-class Daemon implements Runnable {
-  private Thread[] t = new Thread[10];
-  public void run() {
-    for(int i = 0; i < t.length; i++) {
-      t[i] = new Thread(new DaemonSpawn());
-      t[i].start();
-      printnb("DaemonSpawn " + i + " started, ");
-    }
-    for(int i = 0; i < t.length; i++)
-      printnb("t[" + i + "].isDaemon() = " +
-        t[i].isDaemon() + ", ");
-    while(true)
-      Thread.yield();
-  }
-}
- 
-class DaemonSpawn implements Runnable {
-  public void run() {
-    while(true)
-      Thread.yield();
-  }
-}
- 
-public class Daemons {
-  public static void main(String[] args) throws Exception {
-    Thread d = new Thread(new Daemon());
-    d.setDaemon(true);
-    d.start();
-    printnb("d.isDaemon() = " + d.isDaemon() + ", ");
-    // Даем потокам-демонам завершить процесс запуска:
-    TimeUnit.SECONDS.sleep(1);
-  }
-}
-<spoiler text="Output:"> (Sample)
-
-d.isDaemon() = true, DaemonSpawn 0 started, DaemonSpawn 1 started, DaemonSpawn 2 started,
-DaemonSpawn 3 started, DaemonSpawn 4 started, DaemonSpawn 5 started, DaemonSpawn 6 started,
-DaemonSpawn 7 started, DaemonSpawn 8 started, DaemonSpawn 9 started, t[0].isDaemon() = true,
-t[1].isDaemon() = true, t[2].isDaemon() = true, t[3].isDaemon() = true, t[4].isDaemon() = true,
-t[5].isDaemon() = true, t[6].isDaemon() = true, t[7].isDaemon() = true, t[8].isDaemon() = true,
-t[9].isDaemon() = true,
-</spoiler> Поток Daemon переводится в режим демона, а затем порождает группу новых потоков, которые явно не назначаются демонами, но при этом все равно оказываются ими. Затем Daemon входит в бесконечный цикл, на каждом шаге которого вызывается метод yield(), передающий управление другими процессам.
-
-Учтите, что потоки-демоны завершают свои методы run() без выполнения секций finally:
-
-//: concurrency/DaemonsDontRunFinally.java
-// Потоки-демоны не выполняют секцию finally.
-import java.util.concurrent.*;
-import static net.mindview.util.Print.*;
- 
-class ADaemon implements Runnable {
-  public void run() {
-    try {
-      print("Starting ADaemon");
-      TimeUnit.SECONDS.sleep(1);
-    } catch(InterruptedException e) {
-      print("Exiting via InterruptedException");
-    } finally {
-      print("This should always run?");
-    }
-  }
-}
- 
-public class DaemonsDontRunFinally {
-  public static void main(String[] args) throws Exception {
-    Thread t = new Thread(new ADaemon());
-    t.setDaemon(true);
-    t.start();
-  }
-}
-<spoiler text="Output:">
-
-Starting ADaemon
-</spoiler> Запуск программы наглядно показывает, что секция finally не выполняется. С другой стороны, если закомментировать вызов setDaemon(), вы увидите, что секция finally была выполнена.
-
-Такое поведение верно, даже если из предыдущих описаний finally у вас сложилось обратное впечатление. Демоны завершаются «внезапно», при завершении последнего не-демона. Таким образом, сразу же при выходе из main() JVM немедленно прерывает работу всех демонов, не соблюдая никакие формальности. Невозможность корректного завершения демонов ограничивает возможности их применения. Обычно объекты Executor оказываются более удачным решением, потому что все задачи, находящиеся под управлением Executor, могут быть завершены одновременно.
-
-
-Варианты кодирования
-Во всех предшествующих примерах все классы задач реализовали интерфейс Runnable. В очень простых случаях можно использовать альтернативное решение с прямым наследованием от Thread:
-
-//: concurrency/SimpleThread.java
-// Прямое наследование от класса Thread..
- 
-public class SimpleThread extends Thread {
-  private int countDown = 5;
-  private static int threadCount = 0;
-  public SimpleThread() {
-    // Store the thread name:
-    super(Integer.toString(++threadCount));
-    start();
-  }
-  public String toString() {
-    return "#" + getName() + "(" + countDown + "), ";
-  }
-  public void run() {
-    while(true) {
-      System.out.print(this);
-      if(--countDown == 0)
-        return;
-    }
-  }
-  public static void main(String[] args) {
-    for(int i = 0; i < 5; i++)
-      new SimpleThread();
-  }
-}
-<spoiler text="Output:">
-
-#1(5), #1(4), #1(3), #1(2), #1(1), #2(5), #2(4), #2(3), #2(2), #2(1), #3(5),
-#3(4), #3(3), #3(2), #3(1), #4(5), #4(4), #4(3), #4(2), #4(1), #5(5), #5(4),
-#5(3), #5(2), #5(1),
-</spoiler> Чтобы задать объектам Thread имена, вы вызываете соответствующий конструктор Thread. Имя читается в методе toString() при помощи getName().
-
-Также иногда встречается идиома самоуправляемой реализации Runnable:
-
-//: concurrency/SelfManaged.java
-// Реализация Runnable. содержащая собственный объект Thread.
- 
-public class SelfManaged implements Runnable {
-  private int countDown = 5;
-  private Thread t = new Thread(this);
-  public SelfManaged() { t.start(); }
-  public String toString() {
-    return Thread.currentThread().getName() +
-      "(" + countDown + "), ";
-  }
-  public void run() {
-    while(true) {
-      System.out.print(this);
-      if(--countDown == 0)
-        return;
-    }
-  }
-  public static void main(String[] args) {
-    for(int i = 0; i < 5; i++)
-      new SelfManaged();
-  }
-}
-<spoiler text="Output:">
-
-Thread-0(5), Thread-0(4), Thread-0(3), Thread-0(2), Thread-0(1), Thread-1(5), Thread-1(4),
-Thread-1(3), Thread-1(2), Thread-1(1), Thread-2(5), Thread-2(4), Thread-2(3), Thread-2(2),
-Thread-2(1), Thread-3(5), Thread-3(4), Thread-3(3), Thread-3(2), Thread-3(1), Thread-4(5),
+>Thread-3(2), Thread-3(1), Thread-4(5),
 Thread-4(4), Thread-4(3), Thread-4(2), Thread-4(1),
-</spoiler> В целом происходящее не так уж сильно отличается от наследования от Thread, разве что синтаксис получается чуть более громоздким. Однако реализация интерфейса позволяет наследовать от другого класса, тогда как в варианте с Thread это невозможно.
 
-Обратите внимание на вызов start() в конструкторе. Приведенный пример очень прост, поэтому, скорее всего, в нем такое решение безопасно, но вы должны знать, что запуск потоков в конструкторе может создать изрядные проблемы — до завершения конструктора может быть запущена на выполнение другая задача, которая обратится к объекту в нестабильном состоянии. Это еще одна причина, по которой использование Executor предпочтительнее явного создания объектов Thread.
+ В целом происходящее не так уж сильно отличается от наследования от Thread, разве что синтаксис получается чуть более громоздким. Однако реализация интерфейса позволяет наследовать от другого класса, тогда как в варианте с Thread это невозможно.
 
-Иногда бывает разумно спрятать потоковый код внутри класса с помощью внутреннего класса, как показано здесь:
+ Обратите внимание на вызов start() в конструкторе. Приведенный пример очень прост, поэтому, скорее всего, в нем такое решение безопасно, но вы должны знать, что запуск потоков в конструкторе может создать изрядные проблемы — до завершения конструктора может быть запущена на выполнение другая задача, которая обратится к объекту в нестабильном состоянии. Это еще одна причина, по которой использование Executor предпочтительнее явного создания объектов Thread.
 
-//: concurrency/ThreadVariations.java
-// Создание потоков с использованием внутренних классов..
-import java.util.concurrent.*;
-import static net.mindview.util.Print.*;
- 
-// Using a named inner class:
-class InnerThread1 {
-  private int countDown = 5;
-  private Inner inner;
-  private class Inner extends Thread {
-    Inner(String name) {
-      super(name);
-      start();
-    }
-    public void run() {
-      try {
-        while(true) {
-          print(this);
-          if(--countDown == 0) return;
-          sleep(10);
-        }
-      } catch(InterruptedException e) {
-        print("interrupted");
-      }
-    }
-    public String toString() {
-      return getName() + ": " + countDown;
-    }
-  }
-  public InnerThread1(String name) {
-    inner = new Inner(name);
-  }
-}
- 
-// Используем безымянный внутренний класс::
-class InnerThread2 {
-  private int countDown = 5;
-  private Thread t;
-  public InnerThread2(String name) {
-    t = new Thread(name) {
-      public void run() {
-        try {
-          while(true) {
-            print(this);
-            if(--countDown == 0) return;
-            sleep(10);
-          }
-        } catch(InterruptedException e) {
-          print("sleep() interrupted");
-        }
-      }
-      public String toString() {
-        return getName() + ": " + countDown;
-      }
-    };
-    t.start();
-  }
-}
- 
-// Используем именованную реализацию Runnable:
-class InnerRunnable1 {
-  private int countDown = 5;
-  private Inner inner;
-  private class Inner implements Runnable {
-    Thread t;
-    Inner(String name) {
-      t = new Thread(this, name);
-      t.start();
-    }
-    public void run() {
-      try {
-        while(true) {
-          print(this);
-          if(--countDown == 0) return;
-          TimeUnit.MILLISECONDS.sleep(10);
-        }
-      } catch(InterruptedException e) {
-        print("sleep() interrupted");
-      }
-    }
-    public String toString() {
-      return t.getName() + ": " + countDown;
-    }
-  }
-  public InnerRunnable1(String name) {
-    inner = new Inner(name);
-  }
-}
- 
-// Используем анонимную реализацию Runnable:
-class InnerRunnable2 {
-  private int countDown = 5;
-  private Thread t;
-  public InnerRunnable2(String name) {
-    t = new Thread(new Runnable() {
-      public void run() {
-        try {
-          while(true) {
-            print(this);
-            if(--countDown == 0) return;
-            TimeUnit.MILLISECONDS.sleep(10);
-          }
-        } catch(InterruptedException e) {
-          print("sleep() interrupted");
-        }
-      }
-      public String toString() {
-        return Thread.currentThread().getName() +
-          ": " + countDown;
-      }
-    }, name);
-    t.start();
-  }
-}
- 
-// Отдельный метод для выполнения кода в потоке:
-class ThreadMethod {
-  private int countDown = 5;
-  private Thread t;
-  private String name;
-  public ThreadMethod(String name) { this.name = name; }
-  public void runTask() {
-    if(t == null) {
-      t = new Thread(name) {
-        public void run() {
-          try {
-            while(true) {
-              print(this);
-              if(--countDown == 0) return;
-              sleep(10);
-            }
-          } catch(InterruptedException e) {
-            print("sleep() interrupted");
-          }
-        }
-        public String toString() {
-          return getName() + ": " + countDown;
-        }
-      };
-      t.start();
-    }
-  }
-}
- 
-public class ThreadVariations {
-  public static void main(String[] args) {
-    new InnerThread1("InnerThread1");
-    new InnerThread2("InnerThread2");
-    new InnerRunnable1("InnerRunnable1");
-    new InnerRunnable2("InnerRunnable2");
-    new ThreadMethod("ThreadMethod").runTask();
-  }
-} /* (Execute to see output) *///:~
-InnerThread1 определяет именованный внутренний класс, производный от Thread, и создает экземпляр этого класса в конструкторе. Поступать так стоит в том случае, когда у внутреннего класса есть особые возможности (новые методы), которые могут понадобиться в других методах. Однако в большинстве случаев причина создания потока — использование функциональности класса Thread, поэтому в именованном внутреннем классе особой нужды нет. InnerThread2 показывает другое решение. В конструкторе создается безымянный внутренний субкласс Thread, преобразуемый восходящим преобразованием к ссылке на Thread.t. Если другим методам класса понадобится обратиться к t, они смогут сделать это через интерфейс Thread, и им не нужно будет знать точный тип объекта.
+ Иногда бывает разумно спрятать потоковый код внутри класса с помощью внутреннего класса, как показано здесь:
+
+	//: concurrency/ThreadVariations.java
+	// Создание потоков с использованием внутренних классов..
+	import java.util.concurrent.*;
+	import static net.mindview.util.Print.*;
+	 
+	// Using a named inner class:
+	class InnerThread1 {
+	  private int countDown = 5;
+	  private Inner inner;
+	  private class Inner extends Thread {
+	    Inner(String name) {
+	      super(name);
+	      start();
+	    }
+	    public void run() {
+	      try {
+	        while(true) {
+	          print(this);
+	          if(--countDown == 0) return;
+	          sleep(10);
+	        }
+	      } catch(InterruptedException e) {
+	        print("interrupted");
+	      }
+	    }
+	    public String toString() {
+	      return getName() + ": " + countDown;
+	    }
+	  }
+	  public InnerThread1(String name) {
+	    inner = new Inner(name);
+	  }
+	}
+	 
+	// Используем безымянный внутренний класс::
+	class InnerThread2 {
+	  private int countDown = 5;
+	  private Thread t;
+	  public InnerThread2(String name) {
+	    t = new Thread(name) {
+	      public void run() {
+	        try {
+	          while(true) {
+	            print(this);
+	            if(--countDown == 0) return;
+	            sleep(10);
+	          }
+	        } catch(InterruptedException e) {
+	          print("sleep() interrupted");
+	        }
+	      }
+	      public String toString() {
+	        return getName() + ": " + countDown;
+	      }
+	    };
+	    t.start();
+	  }
+	}
+	 
+	// Используем именованную реализацию Runnable:
+	class InnerRunnable1 {
+	  private int countDown = 5;
+	  private Inner inner;
+	  private class Inner implements Runnable {
+	    Thread t;
+	    Inner(String name) {
+	      t = new Thread(this, name);
+	      t.start();
+	    }
+	    public void run() {
+	      try {
+	        while(true) {
+	          print(this);
+	          if(--countDown == 0) return;
+	          TimeUnit.MILLISECONDS.sleep(10);
+	        }
+	      } catch(InterruptedException e) {
+	        print("sleep() interrupted");
+	      }
+	    }
+	    public String toString() {
+	      return t.getName() + ": " + countDown;
+	    }
+	  }
+	  public InnerRunnable1(String name) {
+	    inner = new Inner(name);
+	  }
+	}
+	 
+	// Используем анонимную реализацию Runnable:
+	class InnerRunnable2 {
+	  private int countDown = 5;
+	  private Thread t;
+	  public InnerRunnable2(String name) {
+	    t = new Thread(new Runnable() {
+	      public void run() {
+	        try {
+	          while(true) {
+	            print(this);
+	            if(--countDown == 0) return;
+	            TimeUnit.MILLISECONDS.sleep(10);
+	          }
+	        } catch(InterruptedException e) {
+	          print("sleep() interrupted");
+	        }
+	      }
+	      public String toString() {
+	        return Thread.currentThread().getName() +
+	          ": " + countDown;
+	      }
+	    }, name);
+	    t.start();
+	  }
+	}
+	 
+	// Отдельный метод для выполнения кода в потоке:
+	class ThreadMethod {
+	  private int countDown = 5;
+	  private Thread t;
+	  private String name;
+	  public ThreadMethod(String name) { this.name = name; }
+	  public void runTask() {
+	    if(t == null) {
+	      t = new Thread(name) {
+	        public void run() {
+	          try {
+	            while(true) {
+	              print(this);
+	              if(--countDown == 0) return;
+	              sleep(10);
+	            }
+	          } catch(InterruptedException e) {
+	            print("sleep() interrupted");
+	          }
+	        }
+	        public String toString() {
+	          return getName() + ": " + countDown;
+	        }
+	      };
+	      t.start();
+	    }
+	  }
+	}
+	 
+	public class ThreadVariations {
+	  public static void main(String[] args) {
+	    new InnerThread1("InnerThread1");
+	    new InnerThread2("InnerThread2");
+	    new InnerRunnable1("InnerRunnable1");
+	    new InnerRunnable2("InnerRunnable2");
+	    new ThreadMethod("ThreadMethod").runTask();
+	  }
+	} /* (Execute to see output) *///:~
+
+ InnerThread1 определяет именованный внутренний класс, производный от Thread, и создает экземпляр этого класса в конструкторе. Поступать так стоит в том случае, когда у внутреннего класса есть особые возможности (новые методы), которые могут понадобиться в других методах. Однако в большинстве случаев причина создания потока — использование функциональности класса Thread, поэтому в именованном внутреннем классе особой нужды нет. InnerThread2 показывает другое решение. В конструкторе создается безымянный внутренний субкласс Thread, преобразуемый восходящим преобразованием к ссылке на Thread.t. Если другим методам класса понадобится обратиться к t, они смогут сделать это через интерфейс Thread, и им не нужно будет знать точный тип объекта.
 
 Третий и четвертый классы примера повторяют первые два, только вместо класса Thread они используют интерфейс Runnable.
 
