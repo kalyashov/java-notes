@@ -2467,6 +2467,999 @@
 
  Можно создавать класс с ключевым словом abstract даже тогда, когда в нем не имеется ни одного абстрактного метода. Это бывает полезно в ситуациях, где в классе абстрактные методы просто не нужны, но необходимо запретить создание экземпляров этого класса.
 
+ Интерфейсы и абстрактные классы улучшают структуру кода и способствуют отделению интерфейса от реализации. В традиционных языках программирования такие механизмы не получили особого распространения. Например, в C++ существует лишь косвенная поддержка этих концепций. Сам факт их существования в Java показывает, что эти концепции были сочтены достаточно важными для прямой поддержки в языке.
+
+ А вот как выглядит реализация примера оркестра с использованием абстрактных классов и методов:
+
+	//: interfaces/music4/Music4.java
+	// Абстрактные классы и методы
+	package interfaces.music4;
+	import polymorphism.music.Note;
+	import static net.mindview.util.Print.*;
+	 
+	abstract class Instrument {
+	  private int i; // Память выделяется для каждого объекта
+	  public abstract void play(Note n);
+	  public String what() { return "Instrument"; }
+	  public abstract void adjust();
+	}
+	 
+	class Wind extends Instrument {
+	  public void play(Note n) {
+	    print("Wind.play() " + n);
+	  }
+	  public String what() { return "Wind"; }
+	  public void adjust() {}
+	}
+	 
+	class Percussion extends Instrument {
+	  public void play(Note n) {
+	    print("Percussion.play() " + n);
+	  }
+	  public String what() { return "Percussion"; }
+	  public void adjust() {}
+	}
+	 
+	class Stringed extends Instrument {
+	  public void play(Note n) {
+	    print("Stringed.play() " + n);
+	  }
+	  public String what() { return "Stringed"; }
+	  public void adjust() {}
+	}	
+	 
+	class Brass extends Wind {
+	  public void play(Note n) {
+	    print("Brass.play() " + n);
+	  }
+	  public void adjust() { print("Brass.adjust()"); }
+	}
+	 
+	class Woodwind extends Wind {
+	  public void play(Note n) {
+	    print("Woodwind.play() " + n);
+	  }
+	  public String what() { return "Woodwind"; }
+	}	
+	 
+	public class Music4 {
+	  // Работа метода не зависит от фактического типа объекта. 
+	  // поэтому типы, добавленные в систему, будут работать правильно:
+	  static void tune(Instrument i) {
+	    // ...
+	    i.play(Note.MIDDLE_C);
+	  }
+	  static void tuneAll(Instrument[] e) {
+	    for(Instrument i : e)
+	      tune(i);
+	  }	
+	  public static void main(String[] args) {
+	    // Восходящее преобразование при добавлении в массив
+	    Instrument[] orchestra = {
+	      new Wind(),
+	      new Percussion(),
+	      new Stringed(),
+	      new Brass(),
+	      new Woodwind()
+	    };
+	    tuneAll(orchestra);
+	  }
+	}
+
+**Output:**
+
+>Wind.play() MIDDLE_C
+
+>Percussion.play() MIDDLE_C
+
+>Stringed.play() MIDDLE_C
+
+>Brass.play() MIDDLE_C
+
+>Woodwind.play() MIDDLE_C
+
+ Как видите, объем изменений минимален. Создавать абстрактные классы и методы полезно, так как они подчеркивают абстрактность класса, а также сообщают и пользователю класса, и компилятору, как следует с ним обходиться. Кроме того, абстрактные классы играют полезную роль при переработке программ, потому что они позволяют легко перемещать общие методы вверх по иерархии наследования.
+
+###Интерфейсы
+
+ Ключевое слово interface становится следующим шагом на пути к абстракции. Оно используется для создания полностью абстрактных классов, вообще не имеющих реализации. Создатель интерфейса определяет имена методов, списки аргументов и типы возвращаемых значений, но не тела методов.
+
+ Ключевое слово interface фактически означает: «Именно так должны выглядеть все классы, которые реализуют данный интерфейс». Таким образом, любой код, использующий конкретный интерфейс, знает только то, какие методы вызываются для этого интерфейса, но не более того. Интерфейс определяет своего рода «протокол взаимодействия» между классами. Однако интерфейс представляет собой нечто большее, чем абстрактный класс в своем крайнем проявлении, потому что он позволяет реализовать подобие «множественного наследования» C++: иначе говоря, создаваемый класс может быть преобразован к нескольким базовым типам.
+
+ Чтобы создать интерфейс, используйте ключевое слово interface вместо class. Как и в случае с классами, вы можете добавить перед словом interface спецификатор доступа public (но только если интерфейс определен в файле, имеющем то же имя) или оставить для него дружественный доступ, если он будет использоваться только в пределах своего пакета. Интерфейс также может содержать поля, но они автоматически являются статическими (static) и неизменными (final).
+
+ Для создания класса, реализующего определенный интерфейс (или группу интерфейсов), используется ключевое слово implements. Фактически оно означает: «Интерфейс лишь определяет форму, а сейчас будет показано, как это работает». В остальном происходящее выглядит как обычное наследование. Рассмотрим реализацию на примере иерархии классов Instrument:
+
+ Классы Woodwind и Brass свидетельствуют, что реализация интерфейса представляет собой обычный класс, от которого можно создавать производные классы.
+
+ При описании методов в интерфейсе вы можете явно объявить их открытыми (public), хотя они являются таковыми даже без спецификатора. Однако при реализации интерфейса его методы должны быть объявлены как public. В противном случае будет использоваться доступ в пределах пакета, а это приведет к уменьшению уровня доступа во время наследования, что запрещается компилятором Java.
+
+ Все сказанное можно увидеть в следующем примере с объектами Instrument. Заметьте, что каждый метод интерфейса ограничивается простым объявлением; ничего большего компилятор не" разрешит. Вдобавок ни один из методов интерфейса Instrument не объявлен со спецификатором public, но все методы автоматически являются открытыми:
+
+	//: interfaces/music5/Music5.java
+	// Интерфейсы.
+	package interfaces.music5;
+	import polymorphism.music.Note;
+	import static net.mindview.util.Print.*;
+	 
+	interface Instrument {
+	  // Константа времени компиляции:
+	  int VALUE = 5; // static & final
+	  // Определения методов недопустимы:
+	  void play(Note n); // Автоматически объявлен как public
+	}
+	 
+	class Wind implements Instrument {
+	  public void play(Note n) {
+	    print(this + ".play() " + n);
+	  }
+	  public String toString() { return "Wind"; }
+	  public void adjust() { print(this + ".adjust()"); }
+	}
+	 
+	class Percussion implements Instrument {
+	  public void play(Note n) {
+	    print(this + ".play() " + n);
+	  }
+	  public String toString() { return "Percussion"; }
+	  public void adjust() { print(this + ".adjust()"); }
+	}
+	 
+	class Stringed implements Instrument {
+	  public void play(Note n) {
+	    print(this + ".play() " + n);
+	  }
+	  public String toString() { return "Stringed"; }
+	  public void adjust() { print(this + ".adjust()"); }
+	}
+	 
+	class Brass extends Wind {
+	  public String toString() { return "Brass"; }
+	}	
+	 
+	class Woodwind extends Wind {
+	  public String toString() { return "Woodwind"; }
+	}
+	 
+	public class Music5 {
+	  // Работа метода не зависит от фактического типа объекта. 
+	  // поэтому типы, добавленные в систему, будут работать правильно:
+	  static void tune(Instrument i) {
+	    // ...
+	    i.play(Note.MIDDLE_C);
+	  }
+	  static void tuneAll(Instrument[] e) {
+	    for(Instrument i : e)
+	      tune(i);
+	  }	
+	  public static void main(String[] args) {
+	    // Восходящее преобразование при добавлении в массив:
+	    Instrument[] orchestra = {
+	      new Wind(),
+	      new Percussion(),
+	      new Stringed(),
+	      new Brass(),
+	      new Woodwind()
+	    };
+	    tuneAll(orchestra);
+	  }
+	}
+
+ В этой версии присутствует еще одно изменение: метод what() был заменен на toString(). Так как метод toString() входит в корневой класс Object, его присутствие в интерфейсе не обязательно.
+
+ Остальной код работает так же, как прежде. Неважно, проводите ли вы преобразование к «обычному» классу с именем Instrument, к абстрактному классу с именем Instrument или к интерфейсу с именем Instrument — действие будет одинаковым. В методе tune() ничто не указывает на то, является класс Instrument «обычным» или абстрактным, или это вообще не класс, а интерфейс.
+
+###Отделение интерфейса от реализации
+
+ В любой ситуации, когда метод работает с классом вместо интерфейса, вы ограничены использованием этого класса или его субклассов. Если метод должен быть применен к классу, не входящему в эту иерархию, — значит, вам не повезло. Интерфейсы в значительной мере ослабляют это ограничение. В результате код становится более универсальным, пригодным для повторного использования.
+
+ Представьте, что у нас имеется класс Processor с методами name() и process(). Последний получает входные данные, изменяет их и выдает результат. Базовый класс расширяется для создания разных специализированных типов Processor. В следующем примере производные типы изменяют объекты String (обратите внимание: ковариантными могут быть возвращаемые значения, но не типы аргументов):
+
+	//: interfaces/classprocessor/Apply.java
+	package interfaces.classprocessor;
+	import java.util.*;
+	import static net.mindview.util.Print.*;
+	 
+	class Processor {
+	  public String name() {
+	    return getClass().getSimpleName();
+	  }
+	  Object process(Object input) { return input; }
+	}	
+	 
+	class Upcase extends Processor {
+	  String process(Object input) { // Ковариантный возвращаемый тип
+	    return ((String)input).toUpperCase();
+	  }
+	}
+	 
+	class Downcase extends Processor {
+	  String process(Object input) {
+	    return ((String)input).toLowerCase();
+	  }
+	}
+	 
+	class Splitter extends Processor {
+	  String process(Object input) {
+	    // Аргумент split() используется для разбиения строки
+	    return Arrays.toString(((String)input).split(" "));
+	  }
+	}	
+	 
+	public class Apply {
+	  public static void process(Processor p, Object s) {
+	    print("Using Processor " + p.name());
+	    print(p.process(s));
+	  }
+	  public static String s =
+	    "Disagreement with beliefs is by definition incorrect";
+	  public static void main(String[] args) {
+	    process(new Upcase(), s);
+	    process(new Downcase(), s);
+	    process(new Splitter(), s);
+	  }
+	}
+
+**Output:**
+
+>Using Processor Upcase
+
+>DISAGREEMENT WITH BELIEFS IS BY DEFINITION INCORRECT
+
+>Using Processor Downcase
+
+>disagreement with beliefs is by definition incorrect
+
+>Using Processor Splitter
+
+>[Disagreement, with, beliefs, is, by, definition, incorrect]
+
+ Метод Apply.process() получает любую разновидность Processor, применяет ее к Object, а затем выводит результат. Метод split() является частью класса String. Он получает объект String, разбивает его на несколько фрагментов по ограничителям, определяемым переданным аргументом, и возвращает String[ ]. Здесь он используется как более компактный способ создания массива String. Теперь предположим, что вы обнаружили некое семейство электронных фильтров, которые тоже было бы уместно использовать с методом Apply. process():
+
+//: interfaces/filters/Waveform.java
+package interfaces.filters;
+ public class Waveform {
+  private static long counter;
+  private final long id = counter++;
+  public String toString() { return "Waveform " + id; }
+}
+ 
+//: interfaces/filters/Filter.java
+package interfaces.filters;
+ public class Filter {
+  public String name() {
+    return getClass().getSimpleName();
+  }
+  public Waveform process(Waveform input) { return input; }
+}
+ 
+//: interfaces/filters/LowPass.java
+package interfaces.filters;
+ public class LowPass extends Filter {
+  double cutoff;
+  public LowPass(double cutoff) { this.cutoff = cutoff; }
+  public Waveform process(Waveform input) {
+    return input; //Фиктивная обработка
+  }
+}
+ 
+//: interfaces/filters/HighPass.java
+package interfaces.filters;
+ public class HighPass extends Filter {
+  double cutoff;
+  public HighPass(double cutoff) { this.cutoff = cutoff; }
+  public Waveform process(Waveform input) { return input; }
+}
+ 
+//: interfaces/filters/BandPass.java
+package interfaces.filters;
+ public class BandPass extends Filter {
+  double lowCutoff, highCutoff;
+  public BandPass(double lowCut, double highCut) {
+    lowCutoff = lowCut;
+    highCutoff = highCut;
+  }
+  public Waveform process(Waveform input) { return input; }
+}
+Класс Filter содержит те же интерфейсные элементы, что и Processor, но, поскольку он не является производным от Processor (создатель класса Filter и не подозревал, что вы захотите использовать его как Processor), он не может использоваться с методом Apply.process(), хотя это выглядело бы вполне естественно.
+
+Логическая привязка между Apply.process() и Processor оказывается более сильной, чем реально необходимо, и это обстоятельство препятствует повторному использованию кода Apply.process(). Также обратите внимание, что входные и выходные данные относятся к типу Waveform. Но, если преобразовать класс Processor в интерфейс, ограничения ослабляются и появляется возможность повторного использования Apply.process(). Обновленные версии Processor и Apply выглядят так:
+
+//: interfaces/interfaceprocessor/Processor.java
+package interfaces.interfaceprocessor;
+ public interface Processor {
+  String name();
+  Object process(Object input);
+}
+ 
+//: interfaces/interfaceprocessor/Apply.java
+package interfaces.interfaceprocessor;
+import static net.mindview.util.Print.*;
+ public class Apply {
+  public static void process(Processor p, Object s) {
+    print("Using Processor " + p.name());
+    print(p.process(s));
+  }
+}
+В первом варианте повторного использования кода клиентские программисты пишут свои классы с поддержкой интерфейса:
+
+//: interfaces/interfaceprocessor/StringProcessor.java
+package interfaces.interfaceprocessor;
+import java.util.*;
+ 
+public abstract class StringProcessor implements Processor{
+  public String name() {
+    return getClass().getSimpleName();
+  }
+  public abstract String process(Object input);
+  public static String s =
+    "If she weighs the same as a duck, she's made of wood";
+  public static void main(String[] args) {
+    Apply.process(new Upcase(), s);
+    Apply.process(new Downcase(), s);
+    Apply.process(new Splitter(), s);
+  }
+}	
+ 
+class Upcase extends StringProcessor {
+  public String process(Object input) { // Covariant return
+    return ((String)input).toUpperCase();
+  }
+}
+ 
+class Downcase extends StringProcessor {
+  public String process(Object input) {
+    return ((String)input).toLowerCase();
+  }
+}
+ 
+class Splitter extends StringProcessor {
+  public String process(Object input) {
+    return Arrays.toString(((String)input).split(" "));
+  }	
+}
+<spoiler text="Output:">
+
+Using Processor Upcase
+IF SHE WEIGHS THE SAME AS A DUCK, SHE'S MADE OF WOOD
+Using Processor Downcase
+if she weighs the same as a duck, she's made of wood
+Using Processor Splitter
+[If, she, weighs, the, same, as, a, duck,, she's, made, of, wood]
+</spoiler> Впрочем, довольно часто модификация тех классов, которые вы собираетесь использовать, невозможна. Например, в примере с электронными фильтрами библиотека была получена из внешнего источника. В таких ситуациях применяется паттерн «адаптер»: вы пишете код, который получает имеющийся интерфейс, и создаете тот интерфейс, который вам нужен:
+
+//: interfaces/interfaceprocessor/FilterProcessor.java
+package interfaces.interfaceprocessor;
+import interfaces.filters.*;
+ 
+class FilterAdapter implements Processor {
+  Filter filter;
+  public FilterAdapter(Filter filter) {
+    this.filter = filter;
+  }
+  public String name() { return filter.name(); }
+  public Waveform process(Object input) {
+    return filter.process((Waveform)input);
+  }
+}	
+ 
+public class FilterProcessor {
+  public static void main(String[] args) {
+    Waveform w = new Waveform();
+    Apply.process(new FilterAdapter(new LowPass(1.0)), w);
+    Apply.process(new FilterAdapter(new HighPass(2.0)), w);
+    Apply.process(
+      new FilterAdapter(new BandPass(3.0, 4.0)), w);
+  }
+}
+<spoiler text="Output:">
+
+Using Processor LowPass
+Waveform 0
+Using Processor HighPass
+Waveform 0
+Using Processor BandPass
+Waveform 0
+</spoiler> Конструктор FilterAdapter получает исходный интерфейс (Filter) и создает объект с требуемым интерфейсом Processor. Также обратите внимание на применение делегирования в классе FilterAdapter. Отделение интерфейса от реализации позволяет применять интерфейс к разным реализациям, а следовательно, расширяет возможности повторного использования кода.
+
+«Множественное наследование» в Java
+Так как интерфейс по определению не имеет реализации (то есть не обладает памятью для хранения данных), нет ничего, что могло бы помешать совмещению нескольких интерфейсов. Это очень полезная возможность, так как в некоторых ситуациях требуется выразить утверждение: «Икс является и А, и Б, и В одновременно». В C++ подобное совмещение интерфейсов нескольких классов называется множественным наследованием, и оно имеет ряд очень неприятных аспектов, поскольку каждый класс может иметь свою реализацию. В Java можно добиться аналогичного эффекта, но, поскольку реализацией обладает всего один класс, проблемы, возникающие при совмещении нескольких интерфейсов в C++, в Java принципиально невозможны:
+
+При наследовании базовый класс вовсе не обязан быть абстрактным или «реальным» (без абстрактных методов). Если наследование действительно осуществляется не от интерфейса, то среди прямых «предков» класс может быть только один — все остальные должны быть интерфейсами. Имена интерфейсов перечисляются вслед за ключевым словом implements и разделяются запятыми. Интерфейсов может быть сколько угодно, причем к ним можно проводить восходящее преобразование. Следующий пример показывает, как создать новый класс на основе реального класса и нескольких интерфейсов:
+
+//: interfaces/Adventure.java
+// Использование нескольких интерфейсов.
+ 
+interface CanFight {
+  void fight();
+}
+ 
+interface CanSwim {
+  void swim();
+}
+ 
+interface CanFly {
+  void fly();
+}
+ 
+class ActionCharacter {
+  public void fight() {}
+}	
+ 
+class Hero extends ActionCharacter
+    implements CanFight, CanSwim, CanFly {
+  public void swim() {}
+  public void fly() {}
+}
+ 
+public class Adventure {
+  public static void t(CanFight x) { x.fight(); }
+  public static void u(CanSwim x) { x.swim(); }
+  public static void v(CanFly x) { x.fly(); }
+  public static void w(ActionCharacter x) { x.fight(); }
+  public static void main(String[] args) {
+    Hero h = new Hero();
+    t(h); // Используем объект в качестве типа CanFight
+    u(h); // Используем объект в качестве типа CanSwim 
+    v(h); // Используем объект в качестве типа CanFly
+    w(h); // Используем объект в качестве ActionCharacter
+ 
+  }
+}
+Мы видим, что класс Неrо сочетает реальный класс ActionCharacter с интерфейсами CanFight, CanSwim и CanFly. При объединении реального класса с интерфейсами на первом месте должен стоять реальный класс, а за ним следуют интерфейсы (иначе компилятор выдаст ошибку).
+
+Заметьте, что объявление метода fight() в интерфейсе CanFight совпадает с тем, что имеется в классе ActionCharacter, и поэтому в классе Неrо нет определения метода fight().
+
+Интерфейсы можно расширять, но при этом получается другой интерфейс. Необходимым условием для создания объектов нового типа является наличие всех определений. Хотя класс Неrо не имеет явного определения метода fight(), это определение существует в классе ActionCharacter, что и делает возможным создание объектов класса Неrо.
+
+Класс Adventure содержит четыре метода, которые принимают в качестве аргументов разнообразные интерфейсы и реальный класс. Созданный объект Неrо передается всем этим методам, а это значит, что выполняется восходящее преобразование объекта к каждому интерфейсу по очереди. Система интерфейсов Java спроектирована так, что она нормально работает без особых усилий со стороны программиста.
+
+Помните, что главная причина введения в язык интерфейсов представлена в приведенном примере: это возможность выполнять восходящее преобразование к нескольким базовым типам. Вторая причина для использования интерфейсов совпадает с предназначением абстрактных классов: запретить програм- мисту-клиенту создание объектов этого класса.
+
+Возникает естественный вопрос: что лучше — интерфейс или абстрактный класс? Если можно создать базовый класс без определений методов и переменных-членов, выбирайте именно интерфейс, а не абстрактный класс. Вообще говоря, если известно, что нечто будет использоваться как базовый класс, первым делом постарайтесь сделать это «нечто» интерфейсом.
+
+
+Расширение интерфейса через наследование
+Наследование позволяет легко добавить в интерфейс объявления новых методов, а также совместить несколько интерфейсов в одном. В обоих случаях получается новый интерфейс, как показано в следующем примере:
+
+//: interfaces/HorrorShow.java
+// Расширение интерфейса с помощью наследования
+ 
+interface Monster {
+  void menace();
+}
+ 
+interface DangerousMonster extends Monster {
+  void destroy();
+}
+ 
+interface Lethal {
+  void kill();
+}
+ 
+class DragonZilla implements DangerousMonster {
+  public void menace() {}
+  public void destroy() {}
+}	
+ 
+interface Vampire extends DangerousMonster, Lethal {
+  void drinkBlood();
+}
+ 
+class VeryBadVampire implements Vampire {
+  public void menace() {}
+  public void destroy() {}
+  public void kill() {}
+  public void drinkBlood() {}
+}	
+ 
+public class HorrorShow {
+  static void u(Monster b) { b.menace(); }
+  static void v(DangerousMonster d) {
+    d.menace();
+    d.destroy();
+  }
+  static void w(Lethal l) { l.kill(); }
+  public static void main(String[] args) {
+    DangerousMonster barney = new DragonZilla();
+    u(barney);
+    v(barney);
+    Vampire vlad = new VeryBadVampire();
+    u(vlad);
+    v(vlad);
+    w(vlad);
+  }
+}
+DangerousMonster представляет собой простое расширение Monster, в результате которого образуется новый интерфейс. Он реализуется классом DragonZilla.
+
+Синтаксис, использованный в интерфейсе Vampire, работает только при наследовании интерфейсов. Обычно ключевое слово extends может использоваться всего с одним классом, но, так как интерфейс можно составить из нескольких других интерфейсов, extends подходит для написания нескольких имен интерфейсов при создании нового интерфейса. Как нетрудно заметить, имена нескольких интерфейсов разделяются при этом запятыми.
+
+
+###Конфликты имен при совмещении интерфейсов
+ 
+ При реализации нескольких интерфейсов может возникнуть небольшая проблема. В только что рассмотренном примере интерфейс CanFight и класс ActionCharacter имеют идентичные методы void fight(). Хорошо, если методы полностью тождественны, но что, если они различаются по сигнатуре или типу возвращаемого значения? Рассмотрим такой пример:
+
+	//: interfaces/InterfaceCollision.java
+	package interfaces;
+	 
+	interface I1 { void f(); }
+	interface I2 { int f(int i); }
+	interface I3 { int f(); }
+	class C { public int f() { return 1; } }
+	 
+	class C2 implements I1, I2 {
+	  public void f() {}
+	  public int f(int i) { return 1; } // перегружен
+	}
+	 
+	class C3 extends C implements I2 {
+	  public int f(int i) { return 1; } // перегружен
+	}
+	 
+	class C4 extends C implements I3 {
+	  // Идентичны, все нормально:
+	  public int f() { return 1; }
+	}
+ 
+	// Методы различаются только по типу возвращаемого значения:
+	//! class C5 extends C implements I1 {}
+	//! interface I4 extends I1, I3 {}
+ 
+ Трудность возникает из-за того, что переопределение, реализация и перегрузка образуют опасную «смесь». Кроме того, перегруженные методы не могут различаться только возвращаемыми значениями. Если убрать комментарий в двух последних строках программы, сообщение об ошибке разъясняет суть происходящего:
+
+ InterfaceCollіsion.java.23 f() в C не может реализовать f() в I1; попытка использовать несовместимые возвращаемые типы обнаружено: int требуется- void
+
+ InterfaceCollіsi on java:24- интерфейсы І1 и I1 несовместимы; оба определяют f(), но с различными возвращаемыми типами
+
+ Использование одинаковых имен методов в интерфейсах, предназначенных для совмещения, обычно приводит к запутанному и трудному для чтения коду. Постарайтесь по возможности избегать таких ситуаций.
+
+
+###Интерфейсы как средство адаптации
+ 
+ Одной из самых убедительных причин для использования интерфейсов является возможность определения нескольких реализаций для одного интерфейса. В простых ситуациях такая схема принимает вид метода, который при вызове передается интерфейсу; от вас потребуется реализовать интерфейс и передать объект методу.
+
+ Соответственно, интерфейсы часто применяются в архитектурном паттерне «Стратегия». Вы пишете метод, выполняющий несколько операций; при вызове метод получает интерфейс, который тоже указываете вы. Фактически вы говорите: «Мой метод может использоваться с любым объектом, удовлетворяющим моему интерфейсу». Метод становится более гибким и универсальным.
+
+ Например, конструктор класса Java SE5 Scanner получает интерфейс Readable. Анализ показывает, что Readable не является аргументом любого другого метода из стандартной библиотеки Java — этот интерфейс создавался исключительно для Scanner, чтобы его аргументы не ограничивались определенным классом. При таком подходе можно заставить Scanner работать с другими типами. Если вы хотите создать новый класс, который может использоваться со Scanner, реализуйте в нем интерфейс Readable:
+
+	//: interfaces/RandomWords.java
+	// Реализация интерфейса для выполнения требований метода
+	import java.nio.*;
+	import java.util.*;
+	 
+	public class RandomWords implements Readable {
+	  private static Random rand = new Random(47);
+	  private static final char[] capitals =
+	    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
+	  private static final char[] lowers =
+	    "abcdefghijklmnopqrstuvwxyz".toCharArray();
+	  private static final char[] vowels =
+	    "aeiou".toCharArray();
+	  private int count;
+	  public RandomWords(int count) { this.count = count; }	
+	  public int read(CharBuffer cb) {
+	    if(count-- == 0)
+	      return -1; // Признак конца входных данных
+	    cb.append(capitals[rand.nextInt(capitals.length)]);
+	    for(int i = 0; i < 4; i++) {
+	      cb.append(vowels[rand.nextInt(vowels.length)]);
+	      cb.append(lowers[rand.nextInt(lowers.length)]);
+	    }
+	    cb.append(" ");
+	    return 10;  // Количество присоединенных символов
+	  }
+	  public static void main(String[] args) {
+	    Scanner s = new Scanner(new RandomWords(10));
+	    while(s.hasNext())
+	      System.out.println(s.next());
+	  }
+	}
+
+**Output:**
+
+>Yazeruyac
+
+>Fowenucor
+
+>Goeazimom
+
+>Raeuuacio
+
+>Nuoadesiw
+
+>Hageaikux
+
+>Ruqicibui
+
+>Numasetih
+
+>Kuuuuozog
+
+>Waqizeyoy
+
+ Интерфейс Readable требует только присутствия метода read(). Метод read() либо добавляет данные в аргумент CharBuffer (это можно сделать несколькими способами; обращайтесь к документации CharBuffer), либо возвращает -1 при отсутствии входных данных.
+
+ Допустим, у нас имеется класс, не реализующий интерфейс Readable, — как заставить его работать с Scanner? Перед вами пример класса, генерирующего вещественные числа:
+
+	//: interfaces/RandomDoubles.java
+	import java.util.*;
+	 
+	public class RandomDoubles {
+	  private static Random rand = new Random(47);
+	  public double next() { return rand.nextDouble(); }
+	  public static void main(String[] args) {
+	    RandomDoubles rd = new RandomDoubles();
+	    for(int i = 0; i < 7; i ++)
+	      System.out.print(rd.next() + " ");
+	  }
+	}
+
+**Output:**
+
+>0.7271157860730044 0.5309454508634242
+
+>0.16020656493302599 0.18847866977771732 
+
+>0.5166020801268457 
+
+>0.2678662084200585 0.2613610344283964
+
+
+ Мы снова можем воспользоваться схемой адаптера, но на этот раз адаптируемый класс создается наследованием и реализацией интерфейса Readable. Псевдомножественное наследование, обеспечиваемое ключевым словом interface, позволяет создать новый класс, который одновременно является и RandomDoubles, и Readable:
+
+	//: interfaces/AdaptedRandomDoubles.java
+	// Создание адаптера посредством наследования
+	import java.nio.*;
+	import java.util.*;
+	 
+	public class AdaptedRandomDoubles extends RandomDoubles
+	implements Readable {
+	  private int count;
+	  public AdaptedRandomDoubles(int count) {
+	    this.count = count;
+	  }
+	  public int read(CharBuffer cb) {
+	    if(count-- == 0)
+	      return -1;
+	    String result = Double.toString(next()) + " ";
+	    cb.append(result);
+	    return result.length();
+	  }	
+	  public static void main(String[] args) {
+	    Scanner s = new Scanner(new AdaptedRandomDoubles(7));
+	    while(s.hasNextDouble())
+	      System.out.print(s.nextDouble() + " ");
+	  }
+	}
+
+**Output:**
+
+>0.7271157860730044 0.5309454508634242 
+
+>0.16020656493302599 0.18847866977771732 
+
+>0.5166020801268457 
+
+>0.2678662084200585 0.2613610344283964
+
+
+ Так как интерфейсы можно добавлять подобным образом только к существующим классам, это означает, что любой класс может быть адаптирован для метода, получающего интерфейс. В этом заключается преимущество интерфейсов перед классами.
+
+
+###Поля в интерфейсах
+
+####Объявление полей интерфейсов
+
+ Так как все поля, помещаемые в интерфейсе, автоматически являются статическими (static) и неизменными (final), объявление interface хорошо подходит для создания групп постоянных значений. До выхода Java SE5 только так можно было имитировать перечисляемый тип enum из языков C и C++:
+	
+	//: interfaces/Months.java
+	// Использование интерфейсов для создания групп констант
+	package interfaces;
+	 
+	public interface Months {
+	  int
+	    JANUARY = 1, FEBRUARY = 2, MARCH = 3,
+	    APRIL = 4, MAY = 5, JUNE = 6, JULY = 7,
+	    AUGUST = 8, SEPTEMBER = 9, OCTOBER = 10,
+	    NOVEMBER = 11, DECEMBER = 12;
+	}
+
+ Отметьте стиль Java — использование только заглавных букв (с разделением слов подчеркиванием) для полей со спецификаторами static и final, которым присваиваются фиксированные значения на месте описания. Поля интерфейса автоматически являются открытыми (public), поэтому нет необходимости явно указывать это.
+
+ В Java SE5 появилось гораздо более мощное и удобное ключевое слово enum, поэтому надобность в применении интерфейсов для определения констант отпала. Впрочем, эта старая идиома еще может встречаться в некоторых старых программах.
+
+###Инициализация полей интерфейсов
+
+ Поля, определяемые в интерфейсах, не могут быть «пустыми константами», но могут инициализироваться неконстантными выражениями. Например:
+
+	//: interfaces/RandVals.java
+	// Инициализация полей интерфейсов 
+	// не-константными выражениями
+	import java.util.*;
+	 
+	public interface RandVals {
+	  Random RAND = new Random(47);
+	  int RANDOM_INT = RAND.nextInt(10);
+	  long RANDOM_LONG = RAND.nextLong() * 10;
+	  float RANDOM_FLOAT = RAND.nextLong() * 10;
+	  double RANDOM_DOUBLE = RAND.nextDouble() * 10;
+	}
+
+ Так как поля являются статическими, они инициализируются при первой загрузке класса, которая происходит при первом обращении к любому из полей интерфейса. Простой тест:
+
+	//: interfaces/TestRandVals.java
+	import static net.mindview.util.Print.*;
+	 
+	public class TestRandVals {
+	  public static void main(String[] args) {
+	    print(RandVals.RANDOM_INT);
+	    print(RandVals.RANDOM_LONG);
+	    print(RandVals.RANDOM_FLOAT);
+	    print(RandVals.RANDOM_DOUBLE);
+	  }
+	}
+
+**Output:**
+
+>8
+
+>-32032247016559954
+
+>-8.5939291E18
+
+>5.779976127815049
+
+
+ Конечно, поля не являются частью интерфейса. Данные хранятся в статической области памяти, отведенной для данного интерфейса.
+
+
+###Вложенные интерфейсы
+
+ Интерфейсы могут вкладываться в классы и в другие интерфейсы. При этом обнаруживается несколько весьма интересных особенностей:
+
+	//: interfaces/nesting/NestingInterfaces.java
+	package interfaces.nesting;
+	 
+	class A {
+	  interface B {
+	    void f();
+	  }
+	  public class BImp implements B {
+	    public void f() {}
+	  }
+	  private class BImp2 implements B {
+	    public void f() {}
+	  }
+	  public interface C {
+	    void f();
+	  }
+	  class CImp implements C {
+	    public void f() {}
+	  }	
+	  private class CImp2 implements C {
+	    public void f() {}
+	  }
+	  private interface D {
+	    void f();
+	  }
+	  private class DImp implements D {
+	    public void f() {}
+	  }
+	  public class DImp2 implements D {
+	    public void f() {}
+	  }
+	  public D getD() { return new DImp2(); }
+	  private D dRef;
+	  public void receiveD(D d) {
+	    dRef = d;
+	    dRef.f();
+	  }
+	}	
+	 
+	interface E {
+	  interface G {
+	    void f();
+	  }
+	  // Избыточное объявление public:
+	  public interface H {
+	    void f();
+	  }
+	  void g();
+	  // He может быть private внутри интерфейса:
+	  //! private interface I {}
+	}	
+	 
+	public class NestingInterfaces {
+	  public class BImp implements A.B {
+	    public void f() {}
+	  }
+	  class CImp implements A.C {
+	    public void f() {}
+	  }
+	  // Private-интерфейс не может быть реализован нигде, 
+	  // кроме как внутри класса, где он был определен:
+	  //! class DImp implements A.D {
+	  //!  public void f() {}
+	  //! }
+	  class EImp implements E {
+	    public void g() {}
+	  }
+	  class EGImp implements E.G {
+	    public void f() {}
+	  }
+	  class EImp2 implements E {
+	    public void g() {}
+	    class EG implements E.G {
+	      public void f() {}
+	    }
+	  }	
+	  public static void main(String[] args) {
+	    A a = new A();
+	    // Нет доступа к A.D:
+	    //! A.D ad = a.getD();
+	    // He возвращает ничего, кроме A.D:
+	    //! A.DImp2 di2 = a.getD();
+	    // Член интерфейса недоступен:
+	    //! a.getD().f();
+	    // Только другой объект класса А может использовать getD():
+	    A a2 = new A();
+	    a2.receiveD(a.getD());
+	  }
+	}
+
+ Синтаксис вложения интерфейса в класс достаточно очевиден. Вложенные интерфейсы, как и обычные, могут иметь «пакетную» или открытую (public) видимость.
+
+ Любопытная подробность: интерфейсы могут быть объявлены закрытыми (private), как видно на примере A.D (используется тот же синтаксис описания, что и для вложенных классов). Для чего нужен закрытый вложенный интерфейс?
+
+ Может показаться, что такой интерфейс реализуется только в виде закрытого (private) вложенного класса, подобного DImp, но A.DImp2 показывает, что он также может иметь форму открытого (public) класса. Тем не менее класс A.DImp2 «замкнут» сам на себя. Факт реализации private-интерфейса не может упоминаться в программе, поэтому реализация такого интерфейса — просто способ принудительного определения методов этого интерфейса без добавления информации о дополнительном типе (то есть восходящее преобразование становится невозможным).
+
+ Метод getD() усугубляет сложности, связанные с private-интерфейсом, — это открытый (public) метод, возвращающий ссылку на закрытый (private) интерфейс. Что можно сделать с возвращаемым значением этого метода? В методе main() мы видим несколько попыток использовать это возвращаемое значение, и все они оказались неудачными. Заставить метод работать можно только одним способом — передать возвращаемое значение некоторому объекту, которому разрешено его использование (в нашем случае это еще один объект А, у которого имеется необходимый метод receiveD()).
+
+ Интерфейс Е показывает, что интерфейсы могут быть вложены друг в друга. Впрочем, правила для интерфейсов — в особенности то, что все элементы интерфейса должны быть открытыми (public), — здесь строго соблюдаются, поэтому интерфейс, вложенный внутрь другого интерфейса, автоматически объявляется открытым и его нельзя сделать закрытым (private).
+
+ Пример NestingInterfaces демонстрирует разнообразные способы реализации вложенных интерфейсов. Особо стоит отметить тот факт, что при реализации интерфейса вы не обязаны реализовывать вложенные в него интерфейсы. Также закрытые (private) интерфейсы нельзя реализовать за пределами классов, в которых они описываются.
+
+
+###Интерфейсы и фабрики
+
+ Предполагается, что интерфейс предоставляет своего рода «шлюз» к нескольким альтернативным реализациям. Типичным способом получения объектов, соответствующих интерфейсу, является паттерн «фабрика». Вместо того, чтобы вызывать конструктор напрямую, вы вызываете метод объекта-фабрики, который предоставляет реализацию интерфейса — в этом случае программный код теоретически отделяется от реализации интерфейса, благодаря чему становится возможной совершенно прозрачная замена реализации. Следующий пример демонстрирует типичную структуру фабрики:
+
+	//: interfaces/Factories.java
+	import static net.mindview.util.Print.*;
+	 
+	interface Service {
+	  void method1();
+	  void method2();
+	}
+	 
+	interface ServiceFactory {
+	  Service getService();
+	}
+	 
+	class Implementation1 implements Service {
+	  Implementation1() {} // Доступ в пределах пакета
+	  public void method1() {print("Implementation1 method1");}
+	  public void method2() {print("Implementation1 method2");}
+	}	
+	 
+	class Implementation1Factory implements ServiceFactory {
+	  public Service getService() {
+	    return new Implementation1();
+	  }
+	}
+	 
+	class Implementation2 implements Service {
+	  Implementation2() {} // Доступ в пределах пакета
+	  public void method1() {print("Implementation2 method1");}
+	  public void method2() {print("Implementation2 method2");}
+	}
+	 
+	class Implementation2Factory implements ServiceFactory {
+	  public Service getService() {
+	    return new Implementation2();
+	  }
+	}	
+	 
+	public class Factories {
+	  public static void serviceConsumer(ServiceFactory fact) {
+	    Service s = fact.getService();
+	    s.method1();
+	    s.method2();
+	  }
+	  public static void main(String[] args) {
+	    serviceConsumer(new Implementation1Factory());
+	    // Реализации полностью взаимозаменяемы:
+	    serviceConsumer(new Implementation2Factory());
+	  }
+	}
+**Output:**
+
+>Implementation1 method1
+
+>Implementation1 method2
+
+>Implementation2 method1
+
+>Implementation2 method2
+
+
+ Без применения фабрики вам пришлось бы где-то указать точный тип создаваемого объекта Service, чтобы он мог вызвать подходящий конструктор.
+
+ Но зачем вводить лишний уровень абстракции? Данный паттерн часто применяется при создании библиотек. Допустим, вы создаете систему для игр, которая позволяла бы играть в шашки и шахматы на одной доске:
+
+	//: interfaces/Games.java
+	// Игровая библиотека с использованием фабрики
+	import static net.mindview.util.Print.*;
+	 
+	interface Game { boolean move(); }
+	interface GameFactory { Game getGame(); }
+	 
+	class Checkers implements Game {
+	  private int moves = 0;
+	  private static final int MOVES = 3;
+	  public boolean move() {
+	    print("Checkers move " + moves);
+	    return ++moves != MOVES;
+	  }
+	}
+	 
+	class CheckersFactory implements GameFactory {
+	  public Game getGame() { return new Checkers(); }
+	}	
+	 
+	class Chess implements Game {
+	  private int moves = 0;
+	  private static final int MOVES = 4;
+	  public boolean move() {
+	    print("Chess move " + moves);
+	    return ++moves != MOVES;
+	  }
+	}
+	 
+	class ChessFactory implements GameFactory {
+	  public Game getGame() { return new Chess(); }
+	}	
+	 
+	public class Games {
+	  public static void playGame(GameFactory factory) {
+	    Game s = factory.getGame();
+	    while(s.move())
+	      ;
+	  }
+	  public static void main(String[] args) {
+	    playGame(new CheckersFactory());
+	    playGame(new ChessFactory());
+	  }
+	}
+
+**Output:**
+
+>Checkers move 0
+
+>Checkers move 1
+
+>Checkers move 2
+
+>Chess move 0
+
+>Chess move 1
+
+>Chess move 2
+
+>Chess move 3
+
+
+ Если класс Games представляет сложный блок кода, такое решение позволит повторно использовать его для разных типов игр. В следующей главе будет представлен более элегантный способ реализации фабрик на базе анонимных внутренних классов.
+
+
+###Резюме
+
+ После первого знакомства интерфейсы выглядят так хорошо, что может показаться, будто им всегда следует отдавать предпочтение перед реальными классами. Конечно, в любой ситуации, когда вы создаете класс, вместо него можно создать интерфейс и фабрику.
+
+ Многие программисты поддались этому искушению. Тем не менее любая абстракция должна быть мотивирована реальной потребностью. Основное назначение интерфейсов — возможность переработки реализации в случае необходимости, а не введение лишнего уровня абстракции вместе с дополнительными сложностями. Дополнительные сложности могут оказаться довольно существенными. А представьте, что кто-то будет вынужден разбираться в вашем коде и в конечном итоге поймет, что интерфейсы были добавлены «на всякий случай», без веских причин — в таких ситуациях все проектирование, которое выполнялось данным разработчиком, начинает выглядеть довольно сомнительно.
+
+ В общем случае рекомендуется отдавать предпочтение классам перед интерфейсами. Начните с классов, а если необходимость интерфейсов станет очевидной — переработайте архитектуру своего проекта. Интерфейсы — замечательный инструмент, но ими нередко злоупотребляют.
+
 ##11 глава. Коллекции объектов
 
 ###Основные концепции
@@ -8676,13 +9669,21 @@ Thread-4(4), Thread-4(3), Thread-4(2), Thread-4(1),
 
  InnerThread1 определяет именованный внутренний класс, производный от Thread, и создает экземпляр этого класса в конструкторе. Поступать так стоит в том случае, когда у внутреннего класса есть особые возможности (новые методы), которые могут понадобиться в других методах. Однако в большинстве случаев причина создания потока — использование функциональности класса Thread, поэтому в именованном внутреннем классе особой нужды нет. InnerThread2 показывает другое решение. В конструкторе создается безымянный внутренний субкласс Thread, преобразуемый восходящим преобразованием к ссылке на Thread.t. Если другим методам класса понадобится обратиться к t, они смогут сделать это через интерфейс Thread, и им не нужно будет знать точный тип объекта.
 
-Третий и четвертый классы примера повторяют первые два, только вместо класса Thread они используют интерфейс Runnable.
+ Третий и четвертый классы примера повторяют первые два, только вместо класса Thread они используют интерфейс Runnable.
 
-Класс ThreadMethod демонстрирует создание потока в методе. Вы вызываете метод, когда программа готова к запуску потока, а метод возвращает управление после запуска потока. Если поток выполняет только вспомогательные операции и не является фундаментальной частью класса, то этот способ, вероятно, удобнее и практичнее запуска потока из конструктора класса.
+ Класс ThreadMethod демонстрирует создание потока в методе. Вы вызываете метод, когда программа готова к запуску потока, а метод возвращает управление после запуска потока. Если поток выполняет только вспомогательные операции и не является фундаментальной частью класса, то этот способ, вероятно, удобнее и практичнее запуска потока из конструктора класса.
 
+####Терминология
+ 
+ В Java класс Thread сам по себе ничего не делает. Он только управляет выполнением полученной им задачи. Тем не менее в литературе постоянно используются выражения вида "поток выполняет то или иное действие". Создается впечатление, что поток - это и есть задача. Интерфейс Runnable гораздо уместнее было бы назвать Task. Если интерфейс явно не делает ничего, кроме инкапсуляции своих метода, схема "*делает-это*-able*" годится, но если интерфейс предназначен для выражения концепции более высокого уровня (как Task), то правильнее было бы выбрать концептуальное имя.
+ 
+ Потоковая модель Java основана на низкоуровневых  p-*потоках* (pthreads, POSIX threads) из языка С.
 
-Присоединение к потоку
-Любой поток может вызвать метод join(), чтобы дождаться завершения другого потока перед своим продолжением. Если поток вызывает t.join() для другого потока t, то вызывающий поток приостанавливается до тех пор, пока целевой поток t не завершит свою работу (когда метод t.isAlive() вернет значение false).
+ Здесь термин "задача" используется для описания выполняемой работы и термин "поток" - когда речь идет о конкретном механизме, управляющем выполнением задачи.
+
+####Присоединение к потоку
+
+ Любой поток может вызвать метод join(), чтобы дождаться завершения другого потока перед своим продолжением. Если поток вызывает t.join() для другого потока t, то вызывающий поток приостанавливается до тех пор, пока целевой поток t не завершит свою работу (когда метод t.isAlive() вернет значение false).
 
 Вызвать метод join() можно также и с аргументом, указывающим продолжительность ожидания (в миллисекундах или в миллисекундах с наносекундами). Если целевой поток не закончит работу за означенный период времени, метод join() все равно вернет управление инициатору.
 
@@ -8690,177 +9691,1768 @@ Thread-4(4), Thread-4(3), Thread-4(2), Thread-4(1),
 
 Все эти операции продемонстрированы в следующем примере:
 
-//: concurrency/Joining.java
-// Демонстрация join().
-import static net.mindview.util.Print.*;
+	//: concurrency/Joining.java
+	// Демонстрация join().
+	import static net.mindview.util.Print.*;
+	 
+	class Sleeper extends Thread {
+	  private int duration;
+	  public Sleeper(String name, int sleepTime) {
+	    super(name);
+	    duration = sleepTime;
+	    start();
+	  }
+	  public void run() {
+	    try {
+	      sleep(duration);
+	    } catch(InterruptedException e) {
+	      print(getName() + " was interrupted. " +
+	        "isInterrupted(): " + isInterrupted());
+	      return;
+	    }
+	    print(getName() + " has awakened");
+	  }
+	}
+	 
+	class Joiner extends Thread {
+	  private Sleeper sleeper;
+	  public Joiner(String name, Sleeper sleeper) {
+	    super(name);
+	    this.sleeper = sleeper;
+	    start();
+	  }
+	  public void run() {
+	   try {
+	      sleeper.join();
+	    } catch(InterruptedException e) {
+	      print("Interrupted");
+	    }
+	    print(getName() + " join completed");
+	  }
+	}
+	 
+	public class Joining {
+	  public static void main(String[] args) {
+	    Sleeper
+	      sleepy = new Sleeper("Sleepy", 1500),
+	      grumpy = new Sleeper("Grumpy", 1500);
+	    Joiner
+	      dopey = new Joiner("Dopey", sleepy),
+	      doc = new Joiner("Doc", grumpy);
+	    grumpy.interrupt();
+	  }
+	}
+
+**Output:**
+
+>Grumpy was interrupted. isInterrupted(): false
+
+>Doc join completed
+
+>Sleepy has awakened
+
+>Dopey join completed
+
+ Класс Sleeper — это тип потока, который приостанавливается на время, указанное в его конструкторе. В методе run() вызов метода sleep() может закончиться по истечении времени задержки, но может и прерваться. В секции catch выводится сообщение о прерывании, вместе со значением, возвращаемым методом isInterrupted(). Когда другой поток вызывает interrupt() для данного потока, устанавливается флаг, показывающий, что поток был прерван. Однако этот флаг сбрасывается при обработке исключения, поэтому внутри секции catch результатом всегда будет false. Флаг используется в других ситуациях, где поток может исследовать свое прерванное состояние в стороне от исключения.
+
+ Joiner — поток, который ожидает пробуждения потока Sleeper, вызывая для последнего метод join(). В методе main() каждому объекту Joiner сопоставляется Sleeper, и вы можете видеть в результатах работы программы, что, если Sleeper был прерван или завершился нормально, Joiner прекращает работу вместе с потоком Sleeper.
+
+###Группы потоков
+
+ *Группа потоков* (thread group) хранит совокупность потоков. Цитата Джошуа Блоша (Архитектор ПО из Sun, Книга Effective Java Programming Language Guide):  
+
+ *"Группы потоков лучше всего рассматривать как неудачный эксперимент. Просто не обращайте внимание на их существование."*
+
+####Перехват исключений
+
+ Из-за особой природы потоков вы не можете перехватить исключения, возбужденные из потока. После того как исключение выходит из метода run() задачи, оно передается на консоль, если только вы не примете особые меры по перехвату таких исключений. До выхода Java SE5 для перехвата таких исключений использовались группы потоков, но начиная с Java SE5 проблему можно решить при помощи объектов Executor, так что теперь вам не нужно ничего знать о группах потоков.
+
+ Следующая задача всегда выдает исключение, которое выходит за пределы ее метода run():
+
+	//: concurrency/ExceptionThread.java
+	// {ThrowsException}
+	import java.util.concurrent.*;
+	
+	public class ExceptionThread implements Runnable {
+	  public void run() {
+	    throw new RuntimeException();
+	  }
+	  public static void main(String[] args) {
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    exec.execute(new ExceptionThread());
+	  }
+	}
+
+ Результат:
+
+>java.lang.RuntimeException
+
+>     at ExceptionThread.run(ExceptionThread.java:7)
+
+> ...     
  
-class Sleeper extends Thread {
-  private int duration;
-  public Sleeper(String name, int sleepTime) {
-    super(name);
-    duration = sleepTime;
-    start();
-  }
-  public void run() {
-    try {
-      sleep(duration);
-    } catch(InterruptedException e) {
-      print(getName() + " was interrupted. " +
-        "isInterrupted(): " + isInterrupted());
-      return;
-    }
-    print(getName() + " has awakened");
-  }
-}
+ Попытка заключить тело main() в блок try-catch оказывается безуспешной:
+	
+	//: concurrency/NaiveExceptionHandling.java
+	// {ThrowsException}
+	import java.util.concurrent.*;
+	
+	public class NaiveExceptionHandling {
+	  public static void main(String[] args) {
+	    try {
+	      ExecutorService exec =
+	        Executors.newCachedThreadPool();
+	      exec.execute(new ExceptionThread());
+	    } catch(RuntimeException ue) {
+	      // This statement will NOT execute!
+	      System.out.println("Exception has been handled!");
+	    }
+	  }
+	}
+
+  Результат остается таким же: неперехваченное исключение.
+
+ Чтобы решить проблемы, изменим способ создания потоков объектом Executor. В Java SE5 появился новый интерфейс Thread.UncaughtExceptionHandler, который позволяет связать с каждым объектом Thread обработчик исключения. Метод Thread.UncaughtExceptionHandler.uncaughtException() вызывается автоматически тогда, когда поток собирается прекратить свое существование из-за неперехваченного исключения. 
+
+ Чтобы использовать этот интерфейс создадим новый тип ThreadFactory.
+
+	//: concurrency/CaptureUncaughtException.java
+	import java.util.concurrent.*;
+	
+	class ExceptionThread2 implements Runnable {
+	  public void run() {
+	    Thread t = Thread.currentThread();
+	    System.out.println("run() by " + t);
+	    System.out.println(
+	      "eh = " + t.getUncaughtExceptionHandler());
+	    throw new RuntimeException();
+	  }
+	}
+	
+	class MyUncaughtExceptionHandler implements
+	Thread.UncaughtExceptionHandler {
+	  public void uncaughtException(Thread t, Throwable e) {
+	    System.out.println("caught " + e);
+	  }
+	}
+	
+	class HandlerThreadFactory implements ThreadFactory {
+	  public Thread newThread(Runnable r) {
+	    System.out.println(this + " creating new Thread");
+	    Thread t = new Thread(r);
+	    System.out.println("created " + t);
+	    t.setUncaughtExceptionHandler(
+	      new MyUncaughtExceptionHandler());
+	    System.out.println(
+	      "eh = " + t.getUncaughtExceptionHandler());
+	    return t;
+	  }
+	}
+	
+	public class CaptureUncaughtException {
+	  public static void main(String[] args) {
+	    ExecutorService exec = Executors.newCachedThreadPool(
+	      new HandlerThreadFactory());
+	    exec.execute(new ExceptionThread2());
+	  }
+	} 
+
+**Output: **
+
+>HandlerThreadFactory@de6ced creating new Thread
+
+>created Thread[Thread-0,5,main]
+
+>eh = MyUncaughtExceptionHandler@1fb8ee3
+
+>run() by Thread[Thread-0,5,main]
+
+>eh = MyUncaughtExceptionHandler@1fb8ee3
+
+>caught java.lang.RuntimeException
+
+ Как видно, неперехваченные исключения теперь перехватываются методом uncaughtException.
  
-class Joiner extends Thread {
-  private Sleeper sleeper;
-  public Joiner(String name, Sleeper sleeper) {
-    super(name);
-    this.sleeper = sleeper;
-    start();
-  }
-  public void run() {
-   try {
-      sleeper.join();
-    } catch(InterruptedException e) {
-      print("Interrupted");
-    }
-    print(getName() + " join completed");
-  }
-}
+###Совместное использование ресурсов
+
+ Однопоточную программу можно представить в виде одинокого работника, передвигающегося по своему пространству задачи и выполняющего по одной операции за один раз. Раз работник один, вам не приходится принимать во внимание проблему двух сущностей, пытающихся оспорить право на один и тот же ресурс, подобно двум людям, которые хотят одновременно поставить машину в одном месте, вдвоем пройти в одну дверь или даже говорить одновременно.
+
+ В условиях многозадачности ситуация меняется: у вас есть сразу два или три потока, которые стремятся получить доступ к одному и тому же ограниченному ресурсу. Если не предотвратить подобные конфликты, два потока могут попытаться получить доступ к одному счету в банке, одновременно распечатать два документа на одном принтере, изменить одно и то же значение, и т. п.
+
+####Некорректный доступ к ресурсам
+
+ Рассмотрим следующий пример, в котором одна задача генерирует четные числа, а другие задачи эти числа потребляют. Единственной задачей задач-потребителей является проверка четности этих чисел.
+
+ Начнем с определения EvenChecker, задачи-потребителя, поскольку она будет использоваться во всех последующих примерах. Чтобы отделить EvenChecker от различных генераторов, с которыми мы будем экспериментировать, мы определим абстрактный класс IntGenerator, содержащий минимум необходимых методов для EvenChecker: метод для получения следующего значения next() и методы отмены. Класс не реализует интерфейс Generator, потому что он должен выдавать int, а параметризация не поддерживает примитивные параметры.
+
+	//: concurrency/IntGenerator.java
+	public abstract class IntGenerator {
+	  private volatile boolean canceled = false;
+	  public abstract int next();
+	  // Allow this to be canceled:
+	  public void cancel() { canceled = true; }
+	  public boolean isCanceled() { return canceled; }
+	}
+
+ IntGenerator содержит метод cancel(), изменяющий состояние флага canceled, и метод isCanceled(), проверяющий, был ли объект отменен. Поскольку флаг canceled относится к типу boolean, простые операции вроде присваивания и возврата значения выполняются атомарно, то есть без возможности прерывания, и вы не увидите поле в промежуточном состоянии между этими простыми операциями. Смысл ключевого слова volatile будет объяснен позже в этой главе.
+
+ Для тестирования IntGenerator можно воспользоваться следующим классом EvenChecker:
+
+	//: concurrency/EvenChecker.java
+	import java.util.concurrent.*;
+	 
+	public class EvenChecker implements Runnable {
+	  private IntGenerator generator;
+	  private final int id;
+	  public EvenChecker(IntGenerator g, int ident) {
+	    generator = g;
+	    id = ident;
+	  }
+	  public void run() {
+	    while(!generator.isCanceled()) {
+	      int val = generator.next();
+	      if(val % 2 != 0) {
+	        System.out.println(val + " not even!");
+	        generator.cancel(); // Отмена всех EvenChecker
+	      }
+	    }
+	  }
+	  // Тестирование произвольного типа IntGenerator:
+	  public static void test(IntGenerator gp, int count) {
+	    System.out.println("Press Control-C to exit");
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    for(int i = 0; i < count; i++)
+	      exec.execute(new EvenChecker(gp, i));
+	    exec.shutdown();
+	  }
+	  // Значение по умолчанию для count:
+	  public static void test(IntGenerator gp) {
+	    test(gp, 10);
+	  }
+	}
+
+ Как видно из run(), все задачи EvenChecker, зависящие от объекта IntGenerator, проверяют, не были ли они отменены. При таком подходе задачи, совместно использующие общий ресурс (IntGenerator), наблюдают за ресурсом, ожидая от него сигнала завершения. Тем самым устраняется так называемая «ситуация гонки», когда две и более задачи торопятся отреагировать на некоторое условие; это приводит к возникновению конфликтов или получению других некорректных результатов. Будьте внимательны, постарайтесь продумать все возможные сбои в системах с параллельным выполнением и защититься от них. Например, задача не может зависеть от другой задачи, потому что порядок завершения задач не гарантирован. Зависимость задач от объекта, не являющегося задачей, устраняет потенциальную «ситуацию гонки».
+
+ Метод test() настраивает и тестирует произвольный тип IntGenerator, запуская несколько задач EvenChecker с общим IntGenerator. Если IntGenerator приводит к сбою, test() сообщает о происходящем и возвращает управление. В противном случае его следует завершить вручную клавишами Ctrl+C.
+
+ Задачи EvenChecker постоянно читают и проверяют значения, полученные от IntGenerator. Если generator.isCanceled() равен true, run() возвращает управление; это сообщает Executor в EvenChecker.test() о том, что задача завершена. Любая задача EvenChecker может вызвать cancel() для связанного с ней IntGenerator, в результате чего все остальные EvenChecker, использующие IntGenerator, будут корректно завершены. Как будет показано далее в этой главе, в Java существуют и более общие механизмы завершения потоков.
+
+ В первом варианте IntGenerator, который мы рассмотрим, next() выдает серию четных значений:
+	
+	//: concurrency/EvenGenerator.java
+	// Конфликт потоков.
+	 
+	public class EvenGenerator extends IntGenerator {
+	  private int currentEvenValue = 0;
+	  public int next() {
+	    ++currentEvenValue;  // Опасная точка!
+	    ++currentEvenValue;
+	    return currentEvenValue;
+	  }
+	  public static void main(String[] args) {
+	    EvenChecker.test(new EvenGenerator());
+	  }
+	}
+
+**Output:**
+>Нажмите Control-С, чтобы завершить программу
+
+>89476993 not even!
+
+>89476993 not even!
+
+ Одна задача может вызвать next() после того, как другая задача выполнит первый инкремент currentEvenValue, но до второго инкремента (в позиции, помеченной комментарием «Опасная точка!»). При этом значение оказывается в «некорректном» состоянии. Чтобы доказать, что такое возможно, EvenChecker. test() создает группу объектов EvenChecker, которые непрерывно читают результаты EvenGenerator и проверяют их на четность. При обнаружении нечетного числа выводится сообщение об ошибке, и программа завершается.
+
+ Сбой рано или поздно произойдет, потому что задачи EvenChecker могут обратиться к информации EvenGenerator в «некорректном» состоянии. Впрочем, проблема может проявиться лишь после многих циклов отработки EvenGenerator; все зависит от особенностей операционной системы и других подробностей реализации. Чтобы ускорить наступление сбоя, попробуйте разместить вызов yield() между инкрементами. В этом и состоит одна из проблем многопоточного программирования: программа, содержащая ошибку, на первый взгляд работает вполне нормально — а все потому, что вероятность сбоя очень мала.
+
+ Также стоит учитывать, что сама операция инкремента состоит из нескольких шагов и может быть прервана планировщиком потоков в ходе выполнения — другими словами, инкремент в Java не является атомарной операцией. Даже простое приращение переменной может оказаться небезопасным, если не организовать защиту задачи.
+
+####Разрешение конфликтов доступа
+
+ Предыдущий пример показательно иллюстрирует основную проблему потоков: вы никогда не знаете, когда поток будет выполняться. Вообразите, что вы сидите за столом с вилкой в руках, собираетесь съесть последний, самый лакомый кусочек, который лежит на тарелке прямо перед вами. Но, как только вы тянетесь к еде вилкой, она исчезает (как ваш поток был внезапно приостановлен, и другой поток не постеснялся «стянуть» у вас еду). Вот такую проблему нам приходится решать при написании выполняемых одновременно и использующих общие ресурсы программ. Чтобы многопоточность работала, необходим механизм, предотвращающий возможность состязания двух потоков за один ресурс (по крайней мере, во время критичных операций).
+
+ Предотвратить такое столкновение интересов несложно — надо блокировать ресурс для других потоков, пока он находится в ведении одного потока. Первый поток, получивший доступ к ресурсу, вешает на него «замок», и тогда все остальные потоки не смогут получить этот ресурс до тех пор, пока «замок» не будет снят, и только после этого другой поток овладеет ресурсом и заблокирует его, и т. д. Если переднее сиденье машины является для детей ограниченным ресурсом, то ребенок, первым крикнувший «Чур, я спереди!», отстоял свое право на «блокировку».
+
+ Для решения проблемы соперничества потоков фактически все многопоточные схемы синхронизируют доступ к разделяемым ресурсам. Это означает, что доступ к разделяемому ресурсу в один момент времени может получить только один поток. Чаще всего это выполняется помещением фрагмента кода в секцию блокировки так, что одновременно пройти по этому фрагменту кода может только один поток. Поскольку такое предложение блокировки дает эффект взаимного исключения, этот механизм часто называют мьютексом (MUTual Exclusion).
+
+ Вспомните свою ванную комнату — несколько людей (потоки) могут захотеть эксклюзивно владеть ей (разделяемым ресурсом). Чтобы получить доступ в ванную, человек стучится в дверь, желая проверить, не занята ли она. Если ванная свободна, он входит в нее и запирает дверь. Любой другой поток, желающий оказаться внутри, «блокируется» в этом действии, и ему приходится ждать у двери, пока ванная не освободится.
+
+ Аналогия немного нарушается, когда дверь в ванную комнату снова открывается, и приходит время передать доступ другому потоку. Как люди на самом деле не становятся в очередь, так и здесь мы точно не знаем, кто «зайдет в ванную» следующим, потому что поведение планировщика потоков недетерминировано. Существует гипотетическая группа блокированных потоков, толкущихся у двери, и, когда поток, который занимал «ванную», разблокирует ее и уйдет, тот поток, что окажется ближе всех к двери, «войдет» в нее. Как уже было замечено, планировщику можно давать подсказки методами yield() и setPriority(), но эти подсказки необязательно будут иметь эффект, в зависимости от вашей платформы и реализации виртуальной машины JVM.
+
+ В Java есть встроенная поддержка для предотвращения конфликтов в виде ключевого слова synchronized. Когда поток желает выполнить фрагмент кода, охраняемый словом synchronized, он проверяет, доступен ли семафор, получает доступ к семафору, выполняет код и освобождает семафор.
+
+ Разделяемый ресурс чаще всего является блоком памяти, представляющим объект, но это также может быть файл, порт ввода/вывода или устройство (скажем, принтер). Для управления доступом к разделяемому ресурсу вы сначала помещаете его внутрь объекта. После этого любой метод, получающий доступ к ресурсу, может быть объявлен как synchronized. Это означает, что, если задача выполняется внутри одного из объявленных как synchronized методов, все остальные потоки не сумеют зайти ни в какой synchronized-метод до тех пор, пока первый поток не вернется из своего вызова.
+
+ Как известно, в окончательной версии кода поля класса обычно объявляются закрытыми (private), а доступ к их памяти осуществляется только посредством методов. Чтобы предотвратить конфликты, объявите такие методы синхронизированными (с помощью ключевого слова synchronized):
+
+	 synchronized void f() { /* .. */ }
+	 synchronized void g(){ /*.. */ }
+
+ Каждый объект содержит объект простой блокировки (также называемый монитором). При вызове любого синхронизированного (synchronized) метода объект переходит в состояние блокировки, и пока этот метод не закончит свою работу и не снимет блокировку, другие синхронизированные методы для объекта не могут быть вызваны. В только что рассмотренном примере, если для объекта вызывается метод f(), метод g() не будет вызван до тех пор, пока метод f() не завершит свою работу и не сбросит блокировку. Таким образом, монитор совместно используется всеми синхронизированными методами определенного объекта и предотвращает использование общей памяти несколькими потоками одновременно.
+
+ Учтите, что в многопоточной среде не менее важно объявлять все поля закрытыми (private); в противном случае ключевое слово synchronized не сможет помешать другой задаче обратиться к полю напрямую, и это приведет к конфликту.
+
+ Один поток может блокировать объект многократно. Это происходит, когда метод вызывает другой метод того же объекта, который, в свою очередь, вызывает еще один метод того же объекта, и т. д. Виртуальная машина JVM следит за тем, сколько раз объект был заблокирован. Если объект не блокировался, его счетчик равен нулю. Когда задача захватывает объект в первый раз, счетчик увеличивается до единицы. Каждый раз, когда задача снова овладевает объектом блокировки того же объекта, счетчик увеличивается. Естественно, что все это разрешается только той задаче, которая инициировала первичную блокировку. При выходе задачи из синхронизированного метода счетчик уменьшается на единицу до тех пор, пока не делается равным нулю, после чего объект блокировки данного объекта становится доступен другим потокам.
+
+ Также существует отдельный монитор для класса (часть объекта Class), который следит за тем, чтобы статические (static) синхронизированные (synchronized) методы не использовали одновременно общие статические данные класса.
  
-public class Joining {
-  public static void main(String[] args) {
-    Sleeper
-      sleepy = new Sleeper("Sleepy", 1500),
-      grumpy = new Sleeper("Grumpy", 1500);
-    Joiner
-      dopey = new Joiner("Dopey", sleepy),
-      doc = new Joiner("Doc", grumpy);
-    grumpy.interrupt();
-  }
-}
-<spoiler text="Output:">
+ Когда следует применять синхронизацию? Используйте правило синхронизации Брайана:
 
-Grumpy was interrupted. isInterrupted(): false
-Doc join completed
-Sleepy has awakened
-Dopey join completed
-</spoiler> Класс Sleeper — это тип потока, который приостанавливается на время, указанное в его конструкторе. В методе run() вызов метода sleep() может закончиться по истечении времени задержки, но может и прерваться. В секции catch выводится сообщение о прерывании, вместе со значением, возвращаемым методом isInterrupted(). Когда другой поток вызывает interrupt() для данного потока, устанавливается флаг, показывающий, что поток был прерван. Однако этот флаг сбрасывается при обработке исключения, поэтому внутри секции catch результатом всегда будет false. Флаг используется в других ситуациях, где поток может исследовать свое прерванное состояние в стороне от исключения.
+ *"Если вы записываете данные в переменную, которая может быть затем прочитана другим потоком, или читаете данные из переменной, которая могла быть записана другим потоком, вы должны использовать синхронизация. Кроме того, и читающий, и записывающий потоки должны синхронизироваться по одной блокировке".*
 
-Joiner — поток, который ожидает пробуждения потока Sleeper, вызывая для последнего метод join(). В методе main() каждому объекту Joiner сопоставляется Sleeper, и вы можете видеть в результатах работы программы, что, если Sleeper был прерван или завершился нормально, Joiner прекращает работу вместе с потоком Sleeper.
+ Если класс содержит более одного метода, работающего с критическими данными, вы должны синхронизировать все задействованные методы. Если синхронизировать только один из методов, то другие методы могут игнорировать блокировку. Это важный момент: каждый метод, обращающийся к критическому, совместно используемому ресурсу, должен быть синхронизирован - иначе синхронизация работать не будет.
+
+###Синхронизация для примера EvenGenerator
+
+ Включив в программу EvenGenerator.java поддержку synchronized, мы можем предотвратить нежелательный доступ со стороны потоков:
+
+	//: concurrency/SynchronizedEvenGenerator.java
+	// Упрощение работы с мьютексами с использованием
+	// ключевого слова synchronized.
+	// {RunByHand}
+	 
+	public class
+	SynchronizedEvenGenerator extends IntGenerator {
+	  private int currentEvenValue = 0;
+	  public synchronized int next() {
+	    ++currentEvenValue;
+	    Thread.yield(); // Ускоряем сбой
+	    ++currentEvenValue;
+	    return currentEvenValue;
+	  }
+	  public static void main(String[] args) {
+	    EvenChecker.test(new SynchronizedEvenGenerator());
+	  }
+	}
+
+ Вызов Thread.yield() между двумя инкрементами повышает вероятность переключения контекста при нахождении currentEvenValue в нечетном состоянии. Так как мьютекс позволяет выполнять критическую секцию не более чем одной задаче, сбоев не будет.
+
+ Первая задача, входящая в next(), устанавливает  блокировку, а все остальные задачи, пытающиеся ее установить, блокируются до момента снятия блокировки первой задачей. В этой точке механизм планирования выбирает другую задачу, ожидающую блокировки. Таким образом, в любой момент времени только одна задача может проходить по коду, защищенному мьютексом.
+
+###Использование объектов Lock
+
+ Библиотека Java SE5 java.utiLconcurrent также содержит явный механизм управления мьютексами, определенный в java.util.concurrent.locks. Объект Lock можно явно создать в программе, установить или снять блокировку; правда, полученный код будет менее элегантным, чем при использовании встроенной формы. С другой стороны, он обладает большей гибкостью при решении некоторых типов задач. Вот как выглядит пример SynchronizedEvenGenerator.java с явным использованием объектов Lock:
+
+	//: concurrency/MutexEvenGenerator.java
+	// Предотвращение потоковых конфликтов с использованием мьютексов.
+	// {RunByHand}
+	import java.util.concurrent.locks.*;
+	 
+	public class MutexEvenGenerator extends IntGenerator {
+	  private int currentEvenValue = 0;
+	  private Lock lock = new ReentrantLock();
+	  public int next() {
+	    lock.lock();
+	    try {
+	      ++currentEvenValue;
+	      Thread.yield(); // Ускоряем сбой
+	      ++currentEvenValue;
+	      return currentEvenValue;
+	    } finally {
+	      lock.unlock();
+	    }
+	  }
+	  public static void main(String[] args) {
+	    EvenChecker.test(new MutexEvenGenerator());
+	  }
+	}
+
+ MutexEvenGenerator добавляет мьютекс с именем lock и использует методы lock() и unlock() для создания критической секции в next(). При использовании объектов Lock следует применять идиому, показанную в примере: сразу же за вызовом lock() необходимо разместить конструкцию try-finally, при этом в секцию finally включается вызов unlock() — только так можно гарантировать снятие блокировки.
+
+ Хотя try-finally требует большего объема кода, чем ключевое слово synchronized, явное использование объектов Lock обладает своими преимуществами. При возникновении проблем с ключевым словом synchronized происходит исключение, но вы не получите возможность выполнить завершающие действия, чтобы сохранить корректное состояние системы. При работе с объектами Lock можно сделать все необходимое в секции finally.
+
+ В общем случае использование synchronized уменьшает объем кода, а также радикально снижает вероятность ошибки со стороны программиста, поэтому явные операции с объектами Lock обычно выполняются только при решении особых задач. Например, с ключевым словом synchronized нельзя попытаться получить блокировку с неудачным исходом или попытаться получить блокировку в течение некоторого промежутка времени с последующим отказом — в подобных случаях приходится использовать библиотеку concurrent.
+
+#####Атомарные операции и ключевое слово volatile
+
+ В дискуссиях, посвященных механизму потоков в Java, часто можно услышать такое утверждение: «Атомарные операции не требуют синхронизации». *Атомарная операция* — это операция, которую не может прервать планировщик потоков — если она начинается, то продолжается до завершения, без возможности переключения контекста (переключения выполнения на другой поток). Не полагайтесь на атомарность, она ненадежна и опасна — используйте ее вместо синхронизации только в том случае, если вы являетесь экспертом в области синхронизации или, по крайней мере, можете получить помощь от такого эксперта.
+
+ Атомарные операции, упоминаемые в таких дискуссиях, включают в себя «простые операции» с примитивными типами, за исключением long и double.
+
+ Чтение и запись примитивных переменных гарантированно выполняются как атомарные (неделимые) операции. С другой стороны, JVM разрешается выполнять чтение и запись 64-разрядных величин (long и double) в виде двух раздельных 32-разрядных операций, с ненулевой вероятностью переключения контекста в ходе чтения или записи. Для достижения атомарности (при простом присваивании и возврате значений) можно определить типы long и double с модификатором volatile (учтите, что до выхода Java SE5 ключевое слово volatile не всегда работало корректно). Некоторые реализации JVM могут предоставлять более сильные гарантии, но вы не должны полагаться на платформенно-специфические возможности.
+
+ В многопроцессорных системах (которые в наши дни представлены многоядерными процессорами, то есть несколькими процесорами на одном чипе) видимость (visibility) играет гораздо более важную роль, чем в однопроцессорных системах. Изменения, вносимые одной задачей, — даже атомарные в смысле невозможности прерывания — могут оставаться невидимыми для других задач (например, если изменения временно хранятся в локальном кэше процессора). Таким образом, разные задачи будут по-разному воспринимать состояние приложения. Механизм синхронизации обеспечивает распространение видимости изменений, вносимых одной задачей в многопроцессорной системе, по всему приложению. Без синхронизации невозможно заранее предсказать, когда именно изменения станут видимыми.
+
+ Ключевое слово volatile обеспечивает видимость в рамках приложения. Если поле объявлено как volatile, это означает, что сразу же после записи в поле изменение будет отражено во всех последующих операциях чтения. Утверждение истинно даже при участии локальных кэшей — поля volatile немедленно записываются в основную память, и дальнейшее чтение происходит из основной памяти.
+
+###Атомарные классы
+
+ В Java SE5 появились специальные классы для выполнения атомарных операций с переменными — Atomiclnteger, AtomicLong, AtomicReference и т. д. Эти классы содержат атомарную операцию условного обновления в форме
+
+	boolean compareAndSer(expectedValue, updateValue);
+
+ Эти классы предназначены для оптимизации с целью использования атомарности на машинном уровне на некоторых современных процессорах, поэтому в общем случае вам они не понадобятся. Иногда они применяются и в повседневном программировании, но только при оптимизации производительности. 
+
+####Критические секции
+
+ Иногда необходимо предотвратить доступ нескольких потоков только к *части кода*, а не к методу в целом. Фрагмент кода, который изолируется таким способом, называется критической секцией (critical section), для его создания также применяется ключевое слово synchronized. На этот раз слово synchronized определяет объект, блокировка которого должна использоваться для синхронизации последующего фрагмента кода:
+
+	 synchronized(синхронизируемыйОбьект) {
+	     // К такому коду доступ может получить 
+	     // одновременно только один поток
+	   }
+
+ Такая конструкция иначе называется синхронизированной блокировкой (synchronized block); перед входом в нее необходимо получить блокировку у syncObject. Если блокировка уже предоставлена другому потоку, вход в последующий фрагмент кода запрещается до тех пор, пока блокировка не будет снята.
+
+ Для создания критических секций также можно воспользоваться явно созданными объектами Lock:
+
+####Синхронизация по другим объектам
+
+ Блоку synchronized необходимо передать объект, который будет использоваться для синхронизации. Чаще всего наиболее естественно передавать текущий объект, для которого был вызван метод synchronized(this). Таким образом, при входе в синхронизируемый блок другие синхронизированные методы объекта вызвать будет нельзя. Действие синхронизации по this фактически заключается в сужении области синхронизации.
+
+ Иногда вам нужно что-то иное, и в таких ситуациях вы создаете отдельный объект и выполняете синхронизацию, привлекая его. В таких случаях необходимо позаботиться о том, чтобы все операции синхронизировались по одному и тому же объекту. Следующий пример показывает, как два потока входят в объект, когда методы этого объекта синхронизированы различными блокировками:
+
+	//: concurrency/SyncObject.java
+	// Синхронизация по другому объекту.
+	import static net.mindview.util.Print.*;
+	 
+	class DualSynch {
+	  private Object syncObject = new Object();
+	  public synchronized void f() {
+	    for(int i = 0; i < 5; i++) {
+	      print("f()");
+	      Thread.yield();
+	    }
+	  }
+	  public void g() {
+	    synchronized(syncObject) {
+	      for(int i = 0; i < 5; i++) {
+	        print("g()");
+	        Thread.yield();
+	      }
+	    }
+	  }
+	}
+	 
+	public class SyncObject {
+	  public static void main(String[] args) {
+	    final DualSynch ds = new DualSynch();
+	    new Thread() {
+	      public void run() {
+	        ds.f();
+	      }
+	    }.start();
+	    ds.g();
+	  }
+	}
+
+**Output:**
+
+>g()
+
+>f()
+
+>g()
+
+>f()
+
+>g()
+
+>f()
+
+>g()
+
+>f()
+
+>g()
+
+>f()
+
+ Метод f() класса DualSync синхронизируется по объекту this (синхронизируя метод целиком), а метод g() использует синхронизацию посредством объекта syncObject. Таким образом, два варианта синхронизации независимы. Демонстрируется этот факт методом main(), в котором создается поток Thread вызовом метода f(). Поток main() после этого вызывает метод g(). Из результата работы программы видно, что оба метода работают одновременно и ни один из них не блокируется соседом.
 
 
-Совместное использование ресурсов
-Однопоточную программу можно представить в виде одинокого работника, передвигающегося по своему пространству задачи и выполняющего по одной операции за один раз. Раз работник один, вам не приходится принимать во внимание проблему двух сущностей, пытающихся оспорить право на один и тот же ресурс, подобно двум людям, которые хотят одновременно поставить машину в одном месте, вдвоем пройти в одну дверь или даже говорить одновременно.
-
-В условиях многозадачности ситуация меняется: у вас есть сразу два или три потока, которые стремятся получить доступ к одному и тому же ограниченному ресурсу. Если не предотвратить подобные конфликты, два потока могут попытаться получить доступ к одному счету в банке, одновременно распечатать два документа на одном принтере, изменить одно и то же значение, и т. п.
-
-Некорректный доступ к ресурсам
-
-Рассмотрим следующий пример, в котором одна задача генерирует четные числа, а другие задачи эти числа потребляют. Единственной задачей задач-потребителей является проверка четности этих чисел.
-
-Начнем с определения EvenChecker, задачи-потребителя, поскольку она будет использоваться во всех последующих примерах. Чтобы отделить EvenChecker от различных генераторов, с которыми мы будем экспериментировать, мы определим абстрактный класс IntGenerator, содержащий минимум необходимых методов для EvenChecker: метод для получения следующего значения next() и методы отмены. Класс не реализует интерфейс Generator, потому что он должен выдавать int, а параметризация не поддерживает примитивные параметры.
-
-//: concurrency/IntGenerator.java
-public abstract class IntGenerator {
-  private volatile boolean canceled = false;
-  public abstract int next();
-  // Allow this to be canceled:
-  public void cancel() { canceled = true; }
-  public boolean isCanceled() { return canceled; }
-}
-IntGenerator содержит метод cancel(), изменяющий состояние флага canceled, и метод isCanceled(), проверяющий, был ли объект отменен. Поскольку флаг canceled относится к типу boolean, простые операции вроде присваивания и возврата значения выполняются атомарно, то есть без возможности прерывания, и вы не увидите поле в промежуточном состоянии между этими простыми операциями. Смысл ключевого слова volatile будет объяснен позже в этой главе.
-
-Для тестирования IntGenerator можно воспользоваться следующим классом EvenChecker:
-
-//: concurrency/EvenChecker.java
-import java.util.concurrent.*;
+####Локальная память потока
  
-public class EvenChecker implements Runnable {
-  private IntGenerator generator;
-  private final int id;
-  public EvenChecker(IntGenerator g, int ident) {
-    generator = g;
-    id = ident;
-  }
-  public void run() {
-    while(!generator.isCanceled()) {
-      int val = generator.next();
-      if(val % 2 != 0) {
-        System.out.println(val + " not even!");
-        generator.cancel(); // Отмена всех EvenChecker
-      }
-    }
-  }
-  // Тестирование произвольного типа IntGenerator:
-  public static void test(IntGenerator gp, int count) {
-    System.out.println("Press Control-C to exit");
-    ExecutorService exec = Executors.newCachedThreadPool();
-    for(int i = 0; i < count; i++)
-      exec.execute(new EvenChecker(gp, i));
-    exec.shutdown();
-  }
-  // Значение по умолчанию для count:
-  public static void test(IntGenerator gp) {
-    test(gp, 10);
-  }
-}
-Как видно из run(), все задачи EvenChecker, зависящие от объекта IntGenerator, проверяют, не были ли они отменены. При таком подходе задачи, совместно использующие общий ресурс (IntGenerator), наблюдают за ресурсом, ожидая от него сигнала завершения. Тем самым устраняется так называемая «ситуация гонки», когда две и более задачи торопятся отреагировать на некоторое условие; это приводит к возникновению конфликтов или получению других некорректных результатов. Будьте внимательны, постарайтесь продумать все возможные сбои в системах с параллельным выполнением и защититься от них. Например, задача не может зависеть от другой задачи, потому что порядок завершения задач не гарантирован. Зависимость задач от объекта, не являющегося задачей, устраняет потенциальную «ситуацию гонки».
+ Второй механизм предотвращения конфликтов доступа к общим ресурсам основан на исключении их совместного использования. Локальная память потока представляет собой механизм автоматического выделения разных областей памяти для одной переменной во всех потоках, использующих объект. Следовательно, если пять потоков используют объект с переменной х, для х будет сгенерировано пять разных областей памяти. Фактически поток связывается с некоторым состоянием.
 
-Метод test() настраивает и тестирует произвольный тип IntGenerator, запуская несколько задач EvenChecker с общим IntGenerator. Если IntGenerator приводит к сбою, test() сообщает о происходящем и возвращает управление. В противном случае его следует завершить вручную клавишами Ctrl+C.
+ За выделение локальной памяти потоков и управление ею отвечает класс java.lang.ThreadLocal.
 
-Задачи EvenChecker постоянно читают и проверяют значения, полученные от IntGenerator. Если generator.isCanceled() равен true, run() возвращает управление; это сообщает Executor в EvenChecker.test() о том, что задача завершена. Любая задача EvenChecker может вызвать cancel() для связанного с ней IntGenerator, в результате чего все остальные EvenChecker, использующие IntGenerator, будут корректно завершены. Как будет показано далее в этой главе, в Java существуют и более общие механизмы завершения потоков.
+ Объекты ThreadLocal обычно хранятся в статических полях. Если вы создаете объект ThreadLocal, для обращения к содержимому объекта можно использовать только методы get() и set(). Метод get() возвращает копию объекта, ассоциированного с потоком, a set() сохраняет свой аргумент в объекте потока, возвращая ранее хранившийся объект. Их использование продемонстрировано в методах increment() и get() класса ThreadLocalVariableHolder. Обратите внимание: методы increment() и get() не синхронизированы, потому что ThreadLocal не гарантирует отсутствия «ситуации гонки».
 
-В первом варианте IntGenerator, который мы рассмотрим, next() выдает серию четных значений:
+###Завершение задач
 
-//: concurrency/EvenGenerator.java
-// Конфликт потоков.
+ Задачи используют проверку isCanceled(), чтобы определить, когда следует завершиться. Однако в некоторых ситуациях задачу требуется завершить быстрее.
+
+###Завершение при блокировке
+
+ Метод sleep() блокирует задачу, иногда заблокированную задачу приходится прерывать.
+
+####Состояние потока
+
+ Поток может находиться в одном из 4х состояний.
+
+ 1. **Переходное** (new): поток находится в этом состоянии очень недолго, только во время создания. Он получает все необходимые системные ресурсы и выполняет инициализацию. На этой стадии он получает право на выделение процессорного времени. Далее поток переводится планировщиком в активное или заблокированное состояние.
+ 2. **Активное** (runnable): в таком состоянии поток будет выполняться тогда, когда у механизма разделения времени процессора появятся для него свободные кванты. Таким образом, поток может как не выполняться, так и выполняться, однако ничто не препятствует последнему при получении потоком процессорного времени; он не "мертв" и не блокирован.
+ 3. **Блокировки** (blocked) поток может выполняться, однако есть что-то, что мешает ему это сделать. Пока поток имеет статус, квантирующий время процессор пропускает его очередь и не выделяет ему циклов на выполнение. До тех пор пока поток не перейдет в рабочее состояние, он не в состоянии произвести ни одной операции.
+ 4. **Завершение** (dead): в этом состоянии поток не ставится на выполнение и не получает процессорного времени. Его задача завершена, и он не может стать активным. Одним из способов перехода в завершенное состояние является  возврат из метода run(), но поток задачи также может быть прерван явно.
+
+####Переход в блокированное состояние
+
+ Поток может перейти в блокированное состояние по следующим причинам:
+
+ - Вы приказали потоку приостановиться с помощью метода sleep(), после этого он будет бездействовать заданное время.
+ - Вы приостановили выполнение потока вызовом метода wait(). Поток будет простаивать до тех пор, пока не получит сообщение о возобновлении работы: notify() или notifyAll() (или эквивалентный вызов signal() или signalAll() для библиотеки Java SE5 java.util.concurrent).
+ - Поток ожидает завершения некоторого ввода-вывода.
+ - Поток пытается вызвать синхронизированный метод другого объекта, но его объект блокировки недоступен.
+
+ Иногда требуется завершить задачу, которая в ожидании.
+
+###Прерывание
+
+ Для завершения заблокированных задач в класс Thread был включен метод interrupt(), устанавливающий состояние прерывания потока. Поток с установленным состоянием прерывания выдает исключение InterruptedException, если он уже заблокирован или пытается выполнить блокирующую операцию. Состояние прерывания сбрасывается при возбуждении исключения или при вызове задачей метода Thread.interrupted(). 
+
+ Чтобы вызвать interrupt(), необходимо иметь ссылка на объект Thread.
+
+ Библиотека concurrent старается избегать прямых манипуляций с объектами Thread и вместо этого пытается все делать через Executor. Если вызвать для объектов Executor метод shutdownNow(), он отправит вызов interrupt() каждому из запущенных им потоков. 
+
+ Также можно прервать только одну задачу - получить ссылку на контекст задачи и вызвать метод cancel().
+
+
+####Проверка прерывания
+
+ *Состояние прерывания* устанавливается вызовом interrupt() и проверяется вызовом interrupted().
  
-public class EvenGenerator extends IntGenerator {
-  private int currentEvenValue = 0;
-  public int next() {
-    ++currentEvenValue;  // Опасная точка!
-    ++currentEvenValue;
-    return currentEvenValue;
-  }
-  public static void main(String[] args) {
-    EvenChecker.test(new EvenGenerator());
-  }
-}
-<spoiler text="Output:"> Нажмите Control-С, чтобы завершить программу
+ Оно не только сообщает, был ли вызван метод interrupt(), но и сбрасывает состояние прерывания.
 
-89476993 not even!
-89476993 not even!
-</spoiler> Одна задача может вызвать next() после того, как другая задача выполнит первый инкремент currentEvenValue, но до второго инкремента (в позиции, помеченной комментарием «Опасная точка!»). При этом значение оказывается в «некорректном» состоянии. Чтобы доказать, что такое возможно, EvenChecker. test() создает группу объектов EvenChecker, которые непрерывно читают результаты EvenGenerator и проверяют их на четность. При обнаружении нечетного числа выводится сообщение об ошибке, и программа завершается.
+###Взаимодействие между потоками
 
-Сбой рано или поздно произойдет, потому что задачи EvenChecker могут обратиться к информации EvenGenerator в «некорректном» состоянии. Впрочем, проблема может проявиться лишь после многих циклов отработки EvenGenerator; все зависит от особенностей операционной системы и других подробностей реализации. Чтобы ускорить наступление сбоя, попробуйте разместить вызов yield() между инкрементами. В этом и состоит одна из проблем многопоточного программирования: программа, содержащая ошибку, на первый взгляд работает вполне нормально — а все потому, что вероятность сбоя очень мала.
+ Как вы уже видели, при использовании поток для одновременного выполнения нескольких задач можно предотвратить некорректное использование ресурсов других задач. Для этого поведение 2х задач синхронизируется при помощи объекта блокировки (мьютекса). Таким образом, если 2 задачи конкурируют друг с другом за общий ресурс (обычно память), вы используете мьютекс, чтобы задачи обращались по очереди к этому ресурсу.
 
-Также стоит учитывать, что сама операция инкремента состоит из нескольких шагов и может быть прервана планировщиком потоков в ходе выполнения — другими словами, инкремент в Java не является атомарной операцией. Даже простое приращение переменной может оказаться небезопасным, если не организовать защиту задачи.
+ Также мы выяснили, что потоки способны конфликтовать друг с другом, и разобрались с тем, как предотвратить такие конфликты. Следующим шагом должно стать изучение возможностей взаимодействия между потоками. Ключевым моментом в этом процессе является подтверждение связи, безопасно реализуемое методами wait() и notify() класса Object. В многопоточной библиотеке Java SE5 также присутствуют объекты Condition с методами await() и signal(). Мы рассмотрим некоторые возникающие проблемы и их решения.
 
-Разрешение конфликтов доступа
+####Методы wait() и notifyAII()
 
-Предыдущий пример показательно иллюстрирует основную проблему потоков: вы никогда не знаете, когда поток будет выполняться. Вообразите, что вы сидите за столом с вилкой в руках, собираетесь съесть последний, самый лакомый кусочек, который лежит на тарелке прямо перед вами. Но, как только вы тянетесь к еде вилкой, она исчезает (как ваш поток был внезапно приостановлен, и другой поток не постеснялся «стянуть» у вас еду). Вот такую проблему нам приходится решать при написании выполняемых одновременно и использующих общие ресурсы программ. Чтобы многопоточность работала, необходим механизм, предотвращающий возможность состязания двух потоков за один ресурс (по крайней мере, во время критичных операций).
+ Метод wait() ожидает изменения некоторого условия, неподконтрольного для текущего метода. Довольно часто это условие изменяется в результате выполнения другой задачи. Активное ожидание, то есть проверка условия в цикле, нежелательно из-за неэффективного расходования вычислительных ресурсов. Таким образом, метод wait() обеспечивает механизм синхронизации действий между задачами.
 
-Предотвратить такое столкновение интересов несложно — надо блокировать ресурс для других потоков, пока он находится в ведении одного потока. Первый поток, получивший доступ к ресурсу, вешает на него «замок», и тогда все остальные потоки не смогут получить этот ресурс до тех пор, пока «замок» не будет снят, и только после этого другой поток овладеет ресурсом и заблокирует его, и т. д. Если переднее сиденье машины является для детей ограниченным ресурсом, то ребенок, первым крикнувший «Чур, я спереди!», отстоял свое право на «блокировку».
+ Важно понять, что метод sleep() *не освобождает* объект блокировки. С другой стороны, метод wait() снимает блокировку с объекта, тем самым позволяя остальным потокам вызывать другие синхронизированные методы объекта во время выполнения wait(). Это очень важно, потому что обычно именно «другие» методы приводят к изменению условия и активизации приостановленной задачи.
 
-Для решения проблемы соперничества потоков фактически все многопоточные схемы синхронизируют доступ к разделяемым ресурсам. Это означает, что доступ к разделяемому ресурсу в один момент времени может получить только один поток. Чаще всего это выполняется помещением фрагмента кода в секцию блокировки так, что одновременно пройти по этому фрагменту кода может только один поток. Поскольку такое предложение блокировки дает эффект взаимного исключения, этот механизм часто называют мьютексом (MUTual Exclusion).
+ Существует две формы метода wait(). У первой формы аргумент имеет такой же смысл, как и аргумент метода sleep(): это продолжительность интервала в миллисекундах, на который приостанавливается выполнение потока. Разница между методами состоит в следующем:
 
-Вспомните свою ванную комнату — несколько людей (потоки) могут захотеть эксклюзивно владеть ей (разделяемым ресурсом). Чтобы получить доступ в ванную, человек стучится в дверь, желая проверить, не занята ли она. Если ванная свободна, он входит в нее и запирает дверь. Любой другой поток, желающий оказаться внутри, «блокируется» в этом действии, и ему приходится ждать у двери, пока ванная не освободится.
+ 1. При выполнении метода wait() блокируемый объект освобождается.
+ 2. Выйти из состояния ожидания, установленного wait(), можно двумя способами: с помощью уведомления notify() или notifyAll() либо по истечении срока ожидания.
+ 
+ Вторая, более распространенная форма вызывается без аргументов. Эта версия метода wait() заставит поток простаивать, пока не придет уведомление notify() или notifyAll().
 
-Аналогия немного нарушается, когда дверь в ванную комнату снова открывается, и приходит время передать доступ другому потоку. Как люди на самом деле не становятся в очередь, так и здесь мы точно не знаем, кто «зайдет в ванную» следующим, потому что поведение планировщика потоков недетерминировано. Существует гипотетическая группа блокированных потоков, толкущихся у двери, и, когда поток, который занимал «ванную», разблокирует ее и уйдет, тот поток, что окажется ближе всех к двери, «войдет» в нее. Как уже было замечено, планировщику можно давать подсказки методами yield() и setPriority(), но эти подсказки необязательно будут иметь эффект, в зависимости от вашей платформы и реализации виртуальной машины JVM.
+ Пожалуй, самое интересное в методах wait(), notify() и notifyAll() — их принадлежность к общему классу Object, а не к классу потоков Thread. Хотя это и кажется немного нелогичным — размещение чего-то, относящегося исключительно к механизму потоков, в общем базовом классе — на самом деле это решение совершенно оправдано, поскольку означенные методы манипулируют блокировками, которые являются частью любого объекта. В результате ожидание (wait()) может использоваться в любом синхронизированном методе, независимо от того, наследует ли класс от Thread или реализует Runnable. Вообще говоря, единственное место, где допустимо вызывать метод wait(), — это синхронизированный метод или блок (метод sleep() можно вызывать в любом месте, так как он не манипулирует блокировкой). Если вызвать метод wait() или notify() в обычном методе, программа скомпилируется, однако при ее выполнении возникнет исключение IllegalMonitorStateException с несколько туманным сообщением «текущий поток не является владельцем» («current thread not owner»). Это сообщение означает, что поток, востребовавший методы wait(), notify() или notifyAll(), должен быть «хозяином» блокируемого объекта (овладеть объектом блокировки) перед вызовом любого из данных методов.
 
-В Java есть встроенная поддержка для предотвращения конфликтов в виде ключевого слова synchronized. Когда поток желает выполнить фрагмент кода, охраняемый словом synchronized, он проверяет, доступен ли семафор, получает доступ к семафору, выполняет код и освобождает семафор.
+ Вы можете «попросить» объект провести операции с помощью его собственного объекта блокировки. Для этого необходимо сначала захватить блокировку для данного объекта. Например, если вы хотите вызвать notifyAll() для объекта х, то должны сделать это в синхронизируемом блоке, устанавливающем блокировку для х:
 
-Разделяемый ресурс чаще всего является блоком памяти, представляющим объект, но это также может быть файл, порт ввода/вывода или устройство (скажем, принтер). Для управления доступом к разделяемому ресурсу вы сначала помещаете его внутрь объекта. После этого любой метод, получающий доступ к ресурсу, может быть объявлен как synchronized. Это означает, что, если задача выполняется внутри одного из объявленных как synchronized методов, все остальные потоки не сумеют зайти ни в какой synchronized-метод до тех пор, пока первый поток не вернется из своего вызова.
+	synchronized(x) { х.notifyAll();}
 
-Как известно, в окончательной версии кода поля класса обычно объявляются закрытыми (private), а доступ к их памяти осуществляется только посредством методов. Чтобы предотвратить конфликты, объявите такие методы синхронизированными (с помощью ключевого слова synchronized):
+ Рассмотрим простой пример. В программе WaxOMatic.java задействованы два процесса: один наносит восковую пасту на автомашину (Саr), а другой полирует ее. Задача полировки не может приступить к работе до того, как задача нанесения пасты завершит свою операцию, а задача нанесения пасты должна ждать завершения полировки, чтобы наложить следующий слой пасты. Оба класса, WaxOn и WaxOff, используют объект Саr, который приостанавливает и возобновляет задачи в ожидании изменения условия:
 
- synchronized void f() { /* .. */ }
- synchronized void g(){ /*.. */ }
-Каждый объект содержит объект простой блокировки (также называемый монитором). При вызове любого синхронизированного (synchronized) метода объект переходит в состояние блокировки, и пока этот метод не закончит свою работу и не снимет блокировку, другие синхронизированные методы для объекта не могут быть вызваны. В только что рассмотренном примере, если для объекта вызывается метод f(), метод g() не будет вызван до тех пор, пока метод f() не завершит свою работу и не сбросит блокировку. Таким образом, монитор совместно используется всеми синхронизированными методами определенного объекта и предотвращает использование общей памяти несколькими потоками одновременно.
+	//: concurrency/waxomatic/WaxOMatic.java
+	// Простейшее взаимодействие задач.
+	package concurrency.waxomatic;
+	import java.util.concurrent.*;
+	import static net.mindview.util.Print.*;
+	 
+	class Car {
+	  private boolean waxOn = false;
+	  public synchronized void waxed() {
+	    waxOn = true; // Готово к обработке
+	    notifyAll();
+	  }
+	  public synchronized void buffed() {
+	    waxOn = false; // Готово к нанесению очередного слоя
+	    notifyAll();
+	  }
+	  public synchronized void waitForWaxing()
+	  throws InterruptedException {
+	    while(waxOn == false)
+	      wait();
+	  }
+	  public synchronized void waitForBuffing()
+	  throws InterruptedException {
+	    while(waxOn == true)
+	      wait();
+	  }
+	}
+	 
+	class WaxOn implements Runnable {
+	  private Car car;
+	  public WaxOn(Car c) { car = c; }
+	  public void run() {
+	    try {
+	      while(!Thread.interrupted()) {
+	        printnb("Wax On! ");
+	        TimeUnit.MILLISECONDS.sleep(200);
+	        car.waxed();
+	        car.waitForBuffing();
+	      }
+	    } catch(InterruptedException e) {
+	      print("Exiting via interrupt");
+	    }
+	    print("Ending Wax On task");
+	  }
+	}
+	 
+	class WaxOff implements Runnable {
+	  private Car car;
+	  public WaxOff(Car c) { car = c; }
+	  public void run() {
+	    try {
+	      while(!Thread.interrupted()) {
+	        car.waitForWaxing();
+	        printnb("Wax Off! ");
+	        TimeUnit.MILLISECONDS.sleep(200);
+	        car.buffed();
+	      }
+	    } catch(InterruptedException e) {
+	      print("Exiting via interrupt");
+	    }
+	    print("Ending Wax Off task");
+	  }
+	}
+	 
+	public class WaxOMatic {
+	  public static void main(String[] args) throws Exception {
+	    Car car = new Car();
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    exec.execute(new WaxOff(car));
+	    exec.execute(new WaxOn(car));
+	    TimeUnit.SECONDS.sleep(5); // Небольшая задержка...
+	    exec.shutdownNow(); // Прерывание всех задач
+	  }
+	}
 
-Один поток может блокировать объект многократно. Это происходит, когда метод вызывает другой метод того же объекта, который, в свою очередь, вызывает еще один метод того же объекта, и т. д. Виртуальная машина JVM следит за тем, сколько раз объект был заблокирован. Если объект не блокировался, его счетчик равен нулю. Когда задача захватывает объект в первый раз, счетчик увеличивается до единицы. Каждый раз, когда задача снова овладевает объектом блокировки того же объекта, счетчик увеличивается. Естественно, что все это разрешается только той задаче, которая инициировала первичную блокировку. При выходе задачи из синхронизированного метода счетчик уменьшается на единицу до тех пор, пока не делается равным нулю, после чего объект блокировки данного объекта становится доступен другим потокам.
+**Output:**
 
-Также существует отдельный монитор для класса (часть объекта Class), который следит за тем, чтобы статические (static) синхронизированные (synchronized) методы не использовали одновременно общие статические данные класса.
+>Wax On! Wax Off! Wax On! Wax Off! Wax On! Wax Off! Wax On! Wax Off! Wax On!
+
+>Wax Off! Wax On! Wax Off! Wax On! Wax Off! Wax On! Wax Off! Wax On! Wax Off!
+
+>Wax On! Wax Off! Wax On! Wax Off! Wax On! Wax Off! Wax On! 
+
+>Exiting via interrupt
+
+>Ending Wax On task
+
+>Exiting via interrupt
+
+>Ending Wax Off task
+
+ Класс Саr содержит одну логическую переменную waxOn, которая описывает текущее состояние процесса полировки. Метод waitForWaxing() проверяет флаг waxOn, и, если он равен false, вызывающая задача приостанавливается вызовом wait(). Очень важно, что это происходит в синхронизированном методе. При вызове wait() поток приостанавливается, а блокировка снимается. Последнее принципиально, потому что для безопасного изменения состояния объекта (например, для присваивания waxOn значения true, без чего приостановленная задача не сможет продолжить работу) блокировка должна быть доступна для другой задачи. В нашем примере при вызове другой задачей метода waxed(), указывающего, что пришло время что-то сделать, для задания истинного значения waxOn необходимо установить блокировку. Затем waxed() вызывает notifyAll(); задача, приостановленная вызовом wait(), активизируется. Для этого нужно сначала заново получить блокировку, освобожденную при входе в wait(). Задача не активизируется, пока блокировка не станет доступной.
+
+ Предыдущий пример наглядно показывает, что вызов wait() должен быть заключен в цикл while, проверяющий интересующее вас условие(-я). 
+
+###Использование каналов для ввода/вывода между потоками
+
+ Часто бывает полезно организовать взаимодействие потоков посредством механизмов ввода/вывода. Библиотеки потоков могут предоставлять поддержку ввода/вывода между потоками в форме *каналов* (pipes). Последние представлены в стандартной библиотеке ввода/вывода Java классами PipedWriter (позволяет потоку записывать в канал) и PipedReader (предоставляет возможность другому потоку считывать из того же канала).
+
+ Простой пример взаимодействия двух потоков через канал:
+
+	//: concurrency/PipedIO.java
+	// Использование каналов для ввода/вывода между потоками
+	import java.util.concurrent.*;
+	import java.io.*;
+	import java.util.*;
+	import static net.mindview.util.Print.*;
+	 
+	class Sender implements Runnable {
+	  private Random rand = new Random(47);
+	  private PipedWriter out = new PipedWriter();
+	  public PipedWriter getPipedWriter() { return out; }
+	  public void run() {
+	    try {
+	      while(true)
+	        for(char c = 'A'; c <= 'z'; c++) {
+	          out.write(c);
+	          TimeUnit.MILLISECONDS.sleep(rand.nextInt(500));
+	        }
+	    } catch(IOException e) {
+	      print(e + " Sender write exception");
+	    } catch(InterruptedException e) {
+	      print(e + " Sender sleep interrupted");
+	    }
+	  }
+	}
+	 
+	class Receiver implements Runnable {
+	  private PipedReader in;
+	  public Receiver(Sender sender) throws IOException {
+	    in = new PipedReader(sender.getPipedWriter());
+	  }
+	  public void run() {
+	    try {
+	      while(true) {
+	        // Блокируется до появления следующего символа:
+	        printnb("Read: " + (char)in.read() + ", ");
+	      }
+	    } catch(IOException e) {
+	      print(e + " Receiver read exception");
+	    }
+	  }
+	}
+	 
+	public class PipedIO {
+	  public static void main(String[] args) throws Exception {
+	    Sender sender = new Sender();
+	    Receiver receiver = new Receiver(sender);
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    exec.execute(sender);
+	    exec.execute(receiver);
+	    TimeUnit.SECONDS.sleep(4);
+	    exec.shutdownNow();
+	  }
+	}
+
+**Output:**
+
+>Read: A, Read: B, Read: C, Read: D, Read: E, Read: F, 
+
+>Read: G, Read: H, Read: I,
+
+>Read: J, Read: K, Read: L,  Read: M, 
+
+>java.lang.InterruptedException: sleep interrupted 
+
+>Sender sleep interrupted
+
+>java.io.InterruptedIOException Receiver read exception
+
+ Классы Sender и Receiver представляют задачи, которые должны взаимодействовать друг с другом. В классе Sender создается канал PipedWriter, существующий как автономный объект, однако при создании канала PipedReader в классе Receiver конструктору необходимо передать ссылку на PipedWriter. Sender записывает данные в канал Writer и бездействует в течение случайно выбранного промежутка времени. Класс Receiver не содержит вызовов sleep() или wait(), но при проведении чтения методом read() он автоматически блокируется при отсутствии данных.
+
+ Заметьте, что потоки sender и receiver запускаются из main() после того, как объекты были полностью сконструированы. Если запускать не полностью сконструированные объекты, каналы на различных платформах могут демонстрировать несогласованное поведение.
+
+###Взаимная блокировка
+
+ Итак, потоки способны перейти в блокированное состояние, а объекты могут обладать синхронизированными методами, которые запрещают использование объекта до тех пор, пока не будет снята блокировка. Возможна ситуация, в которой один поток ожидает другой поток, тот, в свою очередь, ждет освобождения еще одного потока и т. д., пока эта цепочка не замыкается на поток, который ожидает освобождения первого потока. Получается замкнутый круг потоков, которые дожидаются освобождения друг друга, и никто не может двинуться первым. Такая ситуация называется *взаимной блокировкой* (deadlock).
+
+ Если вы запускаете программу и в ней незамедлительно возникает взаимная блокировка, проблему удается немедленно отследить. По-настоящему неприятна ситуация, когда ваша программа по всем признакам работает прекрасно, но тем не менее в какой-то момент входит во взаимную блокировку. Такая опасность незаметно присутствует в программе, пока нежданно-негаданно не проявится у заказчика (и, скорее всего, легко воспроизвести эту ситуацию вам не удастся). Таким образом, тщательное проектирование программы с целью предотвращения взаимных блокировок — важнейшая часть разработки параллельных программ.
+
+ Классический пример взаимной блокировки, предложенный Эдгаром Дейкстрой — задача об обедающих философах. В стандартной формулировке говорится о пяти философах, но, как будет показано далее, допустимо любое количество. Часть времени философы проводят размышляя, часть времени проводят за едой. Когда они размышляют, то не нуждаются в общих ресурсах, но во время обеда они сидят за круглым столом с ограниченным количеством столовых приборов. В описании оригинальной задачи философы пользуются вилками, и, чтобы набрать спагетти из миски в центре стола, им требуются две вилки. Наверное, задача будет выглядеть более логично, если заменить вилки палочками для еды — очевидно, что каждому философу понадобятся две палочки.
+
+ Философы, как это часто бывает, очень бедны, и они смогли позволить себе приобрести лишь пять палочек (или в более общем виде — количество палочек совпадает с количеством философов). Последние разложены кругом по столу, между философами. Когда философу захочется поесть, ему придется взять палочку слева и справа. Если с какой-либо стороны желаемая палочка уже в руке другого философа, только что оторвавшемуся от размышлений придется подождать ее освобождения:
+
+	//: concurrency/Chopstick.java
+	// Палочки для обедающих философов.
+	 
+	public class Chopstick {
+	  private boolean taken = false;
+	  public synchronized
+	  void take() throws InterruptedException {
+	    while(taken)
+	      wait();
+	    taken = true;
+	  }
+	  public synchronized void drop() {
+	    taken = false;
+	    notifyAll();
+	  }
+	}
+
+ Два философа (Philosopher) ни при каких условиях не смогут успешно взять (take()) одну и ту же палочку (Chopstick) одновременно. Если один философ уже взял палочку, другому философу придется подождать (wait()), пока она не будет освобождена текущим пользователем (drop()).
+
+ Когда задача Philosopher вызывает take(), она ожидает, пока флаг taken не перейдет в состояние false (то есть пока палочка не будет освобождена тем философом, который держит ее в данный момент). Далее задача устанавливает флаг taken равным true, показывая тем самым, что палочка занята. Завершив работу с Chopstick, Philosopher вызывает drop(), чтобы изменить флаг и оповестить (notifyAll()) всех остальных философов, ожидающих освобождения палочки:
+
+	//: concurrency/Philosopher.java
+	// Обедающий философ
+	import java.util.concurrent.*;
+	import java.util.*;
+	import static net.mindview.util.Print.*;
+	 
+	public class Philosopher implements Runnable {
+	  private Chopstick left;
+	  private Chopstick right;
+	  private final int id;
+	  private final int ponderFactor;
+	  private Random rand = new Random(47);
+	  private void pause() throws InterruptedException {
+	    if(ponderFactor == 0) return;
+	    TimeUnit.MILLISECONDS.sleep(
+	      rand.nextInt(ponderFactor * 250));
+	  }
+	  public Philosopher(Chopstick left, Chopstick right,
+	    int ident, int ponder) {
+	    this.left = left;
+	    this.right = right;
+	    id = ident;
+	    ponderFactor = ponder;
+	  }
+	  public void run() {
+	    try {
+	      while(!Thread.interrupted()) {
+	        print(this + " " + "thinking");
+	        pause();
+	        // Философ проголодался
+	        print(this + " " + "grabbing right");
+	        right.take();
+	        print(this + " " + "grabbing left");
+	        left.take();
+	        print(this + " " + "eating");
+	        pause();
+	        right.drop();
+	        left.drop();
+	      }
+	    } catch(InterruptedException e) {
+	      print(this + " " + "exiting via interrupt");
+	    }
+	  }
+	  public String toString() { return "Philosopher " + id; }
+	}
+
+ В методе Philosopher.run() все философы непрерывно переходят от размышлений к еде, и наоборот. Метод pause() делает паузу случайной продолжительности, если значение ponderFactor отлично от нуля. Итак, Philosopher думает в течение случайного промежутка времени, затем пытается захватить левую и правую палочки вызовами take(), ест в течение случайного промежутка времени, а затем все повторяется.
+
+ В следующей версии программы возникает взаимная  блокировка:
+
+	//: concurrency/DeadlockingDiningPhilosophers.java
+	// Демонстрация скрытой возможности взаимной блокировки.
+	// {Args: 0 5 timeout}
+	import java.util.concurrent.*;
+	 
+	public class DeadlockingDiningPhilosophers {
+	  public static void main(String[] args) throws Exception {
+	    int ponder = 5;
+	    if(args.length > 0)
+	      ponder = Integer.parseInt(args[0]);
+	    int size = 5;
+	    if(args.length > 1)
+	      size = Integer.parseInt(args[1]);
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    Chopstick[] sticks = new Chopstick[size];
+	    for(int i = 0; i < size; i++)
+	      sticks[i] = new Chopstick();
+	    for(int i = 0; i < size; i++)
+	      exec.execute(new Philosopher(
+	        sticks[i], sticks[(i+1) % size], i, ponder));
+	    if(args.length == 3 && args[2].equals("timeout"))
+	      TimeUnit.SECONDS.sleep(5);
+	    else {
+	      System.out.println("Press 'Enter' to quit");
+	      System.in.read();
+	    }
+	    exec.shutdownNow();
+	  }
+	} /* (Execute to see output) *///:~
+
+ Если философы почти не тратят время на размышления, они будут постоянно конкурировать за палочки при попытках поесть, и взаимные блокировки возникают гораздо чаще.
+
+ Первый аргумент командной строки изменяет значение ponder, влияющее на продолжительность размышлений. Если философов очень много или они проводят большую часть времени в размышлениях, взаимная блокировка может и не возникнуть, хотя ее теоретическая вероятность отлична от нуля. С нулевым аргументом взаимная блокировка наступает намного быстрее.
+
+ Объектам Chopstick не нужны внутренние идентификаторы; они идентифицируются по своей позиции в массиве sticks. Каждому конструктору Philosopher передаются ссылки на правую и левую палочки Chopstick. Последнему Philosopher в качестве правой палочки передается нулевой объект Chopstick; круг замыкается. Теперь может возникнуть ситуация, когда все философы одновременно попытаются есть, и каждый из них будет ожидать, пока сосед положит свою палочку. В программе наступает взаимная блокировка.
+
+ Если философы тратят на размышления больше времени, чем на еду, вероятность взаимной блокировки значительно снижается. Даже может возникнуть иллюзия, что программа свободна от блокировок (при ненулевом значении ponder или большом количестве объектов Philosopher), хотя на самом деле это не так. Именно этим и интересен настоящий пример: программа вроде бы ведет себя верно, тогда как на самом деле возможна взаимная блокировка.
+
+ Для решения проблемы необходимо осознавать, что тупик имеет место при стечении следующих четырех обстоятельств:
+
+ 1. Взаимное исключение: по крайней мере один ресурс, используемый потоками, не должен быть совместно используемым. В нашем случае одной палочкой для еды не могут одновременно есть два философа.
+ 2. По крайней мере одна задача должна удерживать ресурс и ожидать выделения ресурса, в настоящее время удерживаемого другой задачей. То есть для возникновения тупика философ должен сохранять при себе одну палочку и ожидать другую.
+ 3. Ресурс нельзя принудительно отбирать у задачи. Все процессы должны освобождать ресурсы естественным путем. Наши философы вежливы и не станут выхватывать палочки друг у друга.
+ 4. Должно произойти круговое ожидание, когда процесс ожидает ресурс, занятый другим процессом, который в свою очередь ждет ресурс, удерживаемый еще одним процессом, и т. д., пока один из процессов не будет ожидать ресурса, занятого первым процессом, что и приведет к порочному кругу. В нашем примере круговое ожидание происходит потому, что каждый философ пытается сначала получить правую палочку, а потом левую.
+
+ Так как взаимная блокировка возникает лишь при соблюдении всех перечисленных условий, для упреждения тупика достаточно нарушить всего лишь одно из них. В нашей программе проще всего нарушить четвертое условие: оно выполняется, поскольку каждый философ старается брать палочки в определенном порядке — сначала левую, потом правую. Из-за этого может возникнуть ситуация, когда каждый из них держит свою левую палочку и ждет освобождения правой, что и приводит к циклическому ожиданию. Если инициализировать последнего философа так, чтобы он сначала пытался взять левую палочку, а потом правую, взаимная блокировка станет невозможна. Это всего лишь одно решение проблемы, но вы можете предотвратить ее, нарушив одно из оставшихся условий (за подробностями обращайтесь к специализированной литературе по многозадачному программированию):
+
+	//: concurrency/FixedDiningPhilosophers.java
+	// Обедающие философы без взаимной блокировки.
+	// {Args: 5 5 timeout}
+	import java.util.concurrent.*;
+	 
+	public class FixedDiningPhilosophers {
+	  public static void main(String[] args) throws Exception {
+	    int ponder = 5;
+	    if(args.length > 0)
+	      ponder = Integer.parseInt(args[0]);
+	    int size = 5;
+	    if(args.length > 1)
+	      size = Integer.parseInt(args[1]);
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    Chopstick[] sticks = new Chopstick[size];
+	    for(int i = 0; i < size; i++)
+	      sticks[i] = new Chopstick();
+	    for(int i = 0; i < size; i++)
+	      if(i < (size-1))
+	        exec.execute(new Philosopher(
+	          sticks[i], sticks[i+1], i, ponder));
+	      else
+	        exec.execute(new Philosopher(
+	          sticks[0], sticks[i], i, ponder));
+	    if(args.length == 3 && args[2].equals("timeout"))
+	      TimeUnit.SECONDS.sleep(5);
+	    else {
+	      System.out.println("Press 'Enter' to quit");
+	      System.in.read();
+	    }
+	    exec.shutdownNow();
+	  }
+	} /* (Execute to see output) *///:~
+
+ Проследив за тем, чтобы последний философ брал и откладывал левую палочку раньше правой, мы устраняем взаимную блокировку.
+
+ В языке Java нет встроенных средств предупреждения взаимных блокировок; все зависит только от вас и аккуратности вашего кода. Вряд ли эти слова утешат того, кому придется отлаживать программу с взаимной блокировкой.
+
+###Новые библиотечные компоненты
+
+ В библиотеке java.util.concurrent из Java SE5 появился целый ряд новых классов, предназначенных для решения проблем многозадачности. Научившись пользоваться ими, вы сможете создавать более простые и надежные многозадачные программы.
+
+ В этом разделе приведено немало примеров использования различных компонентов. Другие, относительно редко встречающиеся компоненты, здесь не рассматриваются.
+
+ Так как компоненты предназначены для решения разных проблем, простого способа их упорядочения не существует, поэтому мы начнем с более простых примеров и постепенно перейдем к более сложным.
+
+####CountDownLatch
+
+ Класс синхронизирует задачи, заставляя их ожидать завершения группы операций, выполняемых другими задачами.
+
+ Объекту CountDownLatch присваивается начальное значение счетчика, а все задачи, вызвавшие await() для этого объекта, блокируются до момента обнуления счетчика. Другие задачи могут уменьшать счетчик, вызывая метод countDown() для объекта (обычно это делается тогда, когда задача завершает свою работу). Класс CountDownLatch рассчитан на «одноразовое» применение; счетчик не может возвращаться к прежнему состоянию. Если вам нужна версия с возможностью сброса счетчика, воспользуйтесь классом CyclicBarrier.
+
+ Задачи, вызывающие countDown(), не блокируются на время вызова. Только вызов await() блокируется до момента обнуления счетчика.
+
+ Типичный способ применения — разделение задачи на n независимых подзадач и создание объекта CountDownLatch с начальным значением n. При завершении каждая подзадача вызывает countDown() для объекта синхронизации. Потоки, ожидающие решения общей задачи, блокируются вызовом await(). Описанная методика продемонстрирована в следующем примере:
+
+	//: concurrency/CountDownLatchDemo.java
+	import java.util.concurrent.*;
+	import java.util.*;
+	import static net.mindview.util.Print.*;
+	 
+	// Часть основной задачи.:
+	class TaskPortion implements Runnable {
+	  private static int counter = 0;
+	  private final int id = counter++;
+	  private static Random rand = new Random(47);
+	  private final CountDownLatch latch;
+	  TaskPortion(CountDownLatch latch) {
+	    this.latch = latch;
+	  }
+	  public void run() {
+	    try {
+	      doWork();
+	      latch.countDown();
+	    } catch(InterruptedException ex) {
+	      // Приемлемый вариант выхода
+	    }
+	  }
+	  public void doWork() throws InterruptedException {
+	    TimeUnit.MILLISECONDS.sleep(rand.nextInt(2000));
+	    print(this + "completed");
+	  }
+	  public String toString() {
+	    return String.format("%1$-3d ", id);
+	  }
+	}
+	 
+	// Ожидание по объекту CountDownLatch:
+	class WaitingTask implements Runnable {
+	  private static int counter = 0;
+	  private final int id = counter++;
+	  private final CountDownLatch latch;
+	  WaitingTask(CountDownLatch latch) {
+	    this.latch = latch;
+	  }
+	  public void run() {
+	    try {
+	      latch.await();
+	      print("Latch barrier passed for " + this);
+	    } catch(InterruptedException ex) {
+	      print(this + " interrupted");
+	    }
+	  }
+	  public String toString() {
+	    return String.format("WaitingTask %1$-3d ", id);
+	  }
+	}
+	 
+	public class CountDownLatchDemo {
+	  static final int SIZE = 100;
+	  public static void main(String[] args) throws Exception {
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    // Все подзадачи совместно используют один объект CountDownLatch:
+	    CountDownLatch latch = new CountDownLatch(SIZE);
+	    for(int i = 0; i < 10; i++)
+	      exec.execute(new WaitingTask(latch));
+	    for(int i = 0; i < SIZE; i++)
+	      exec.execute(new TaskPortion(latch));
+	    print("Launched all tasks");
+	    exec.shutdown(); // Выход по завершению всех задач
+	  }
+	} /* (Execute to see output) *///:~
+
+ TaskPortion некоторое время ожидает, имитируя выполнение части задачи, а класс WaitingTask представляет некую часть системы, которая обязана дождаться завершения всех подзадач. Все задачи используют один и тот же объект CountDownLatch, определяемый в main().
+
+####CyclicBarrier
+
+ Класс CyclicBarrier используется при создании группы параллельно выполняемых задач, завершения которых необходимо дождаться до перехода к следующей фазе. Все параллельные задачи «приостанавливаются» у барьера, чтобы сделать возможным их согласованное продвижение вперед. Класс очень похож на CountDownLatch, за одним важным исключением: CountDownLatch является «одноразовым», a CyclicBarrier может использоваться снова и снова.
+
+ Имитации привлекали меня с первых дней работы с компьютерами, и параллельные вычисления играют в них ключевую роль. Даже самая первая программа, которую я написал на BASIC, имитировала скачки на ипподроме. Вот как выглядит объектно-ориентированная, многопоточная версия этой программы с использованием CyclicBarrier:
+	
+	//: concurrency/HorseRace.java
+	// Using CyclicBarriers.
+	import java.util.concurrent.*;
+	import java.util.*;
+	import static net.mindview.util.Print.*;
+	 
+	class Horse implements Runnable {
+	  private static int counter = 0;
+	  private final int id = counter++;
+	  private int strides = 0;
+	  private static Random rand = new Random(47);
+	  private static CyclicBarrier barrier;
+	  public Horse(CyclicBarrier b) { barrier = b; }
+	  public synchronized int getStrides() { return strides; }
+	  public void run() {
+	    try {
+	      while(!Thread.interrupted()) {
+	        synchronized(this) {
+	          strides += rand.nextInt(3); // Produces 0, 1 or 2
+	        }
+	        barrier.await();
+	      }
+	    } catch(InterruptedException e) {
+	      // Приемлемый вариант выхода
+	    } catch(BrokenBarrierException e) {
+	      // Исключение, которое нас интересует
+	      throw new RuntimeException(e);
+	    }
+	  }
+	  public String toString() { return "Horse " + id + " "; }
+	  public String tracks() {
+	    StringBuilder s = new StringBuilder();
+	    for(int i = 0; i < getStrides(); i++)
+	      s.append("*");
+	    s.append(id);
+	    return s.toString();
+	  }
+	}
+	 
+	public class HorseRace {
+	  static final int FINISH_LINE = 75;
+	  private List<Horse> horses = new ArrayList<Horse>();
+	  private ExecutorService exec =
+	    Executors.newCachedThreadPool();
+	  private CyclicBarrier barrier;
+	  public HorseRace(int nHorses, final int pause) {
+	    barrier = new CyclicBarrier(nHorses, new Runnable() {
+	      public void run() {
+	        StringBuilder s = new StringBuilder();
+	        for(int i = 0; i < FINISH_LINE; i++)
+	          s.append("="); // Забор на беговой дорожке
+	        print(s);
+	        for(Horse horse : horses)
+	          print(horse.tracks());
+	        for(Horse horse : horses)
+	          if(horse.getStrides() >= FINISH_LINE) {
+	            print(horse + "won!");
+	            exec.shutdownNow();
+	            return;
+	          }
+	        try {
+	          TimeUnit.MILLISECONDS.sleep(pause);
+	        } catch(InterruptedException e) {
+	          print("barrier-action sleep interrupted");
+	        }
+	      }
+	    });
+	    for(int i = 0; i < nHorses; i++) {
+	      Horse horse = new Horse(barrier);
+	      horses.add(horse);
+	      exec.execute(horse);
+	    }
+	  }
+	  public static void main(String[] args) {
+	    int nHorses = 7;
+	    int pause = 200;
+	    if(args.length > 0) { // Необязательный аргумент
+	      int n = new Integer(args[0]);
+	      nHorses = n > 0 ? n : nHorses;
+	    }
+	    if(args.length > 1) { // Необязательный аргумент
+	      int p = new Integer(args[1]);
+	      pause = p > -1 ? p : pause;
+	    }
+	    new HorseRace(nHorses, pause);
+	  }
+	} /* (Execute to see output) *///:~
+
+ Для объекта CyclicBarrier можно задать «барьерное действие» — объект Runnable, автоматически запускаемый при обнулении счетчика (еще одно отличие CyclicBarrier от CountdownLatch). В нашем примере барьерное действие определяется в виде безымянного класса, передаваемого конструктору CyclicBarrier.
+
+ Я попытался сделать так, чтобы каждый объект лошади отображал себя, но порядок отображения зависел от диспетчера задач. Благодаря CyclicBarrier каждая лошадь делает то, что ей необходимо для продвижения вперед, а затем ожидает у барьера перемещения всех остальных лошадей. Когда все лошади переместятся, CyclicBarrier автоматически вызывает «барьерную» задачу Runnable, чтобы отобразить всех лошадей по порядку вместе с барьером. Как только все задачи пройдут барьер, последний автоматически становится готовым для следующего захода.
+
+####DelayQueue
+
+ Класс представляет неограниченную блокирующую очередь объектов, реализующих интерфейс Delayed. Объект может быть извлечен из очереди только после истечения задержки. Очередь сортируется таким образом, что объект в начале очереди обладает наибольшим сроком истечения задержки. Если задержка ни у одного объекта не истекла, начального элемента нет, и вызов poll() возвращает null (из-за этого в очередь не могут помещаться элементы null).
+
+ В следующем примере объекты, реализующие Delayed, сами являются задачами, a DelayedTaskContainer берет задачу с наибольшей просроченной задержкой и запускает ее. Таким образом, DelayQueue является разновидностью приоритетной очереди.
+
+	//: concurrency/DelayQueueDemo.java
+	import java.util.concurrent.*;
+	import java.util.*;
+	import static java.util.concurrent.TimeUnit.*;
+	import static net.mindview.util.Print.*;
+	 
+	class DelayedTask implements Runnable, Delayed {
+	  private static int counter = 0;
+	  private final int id = counter++;
+	  private final int delta;
+	  private final long trigger;
+	  protected static List<DelayedTask> sequence =
+	    new ArrayList<DelayedTask>();
+	  public DelayedTask(int delayInMilliseconds) {
+	    delta = delayInMilliseconds;
+	    trigger = System.nanoTime() +
+	      NANOSECONDS.convert(delta, MILLISECONDS);
+	    sequence.add(this);
+	  }
+	  public long getDelay(TimeUnit unit) {
+	    return unit.convert(
+	      trigger - System.nanoTime(), NANOSECONDS);
+	  }
+	  public int compareTo(Delayed arg) {
+	    DelayedTask that = (DelayedTask)arg;
+	    if(trigger < that.trigger) return -1;
+	    if(trigger > that.trigger) return 1;
+	    return 0;
+	  }
+	  public void run() { printnb(this + " "); }
+	  public String toString() {
+	    return String.format("[%1$-4d]", delta) +
+	      " Task " + id;
+	  }
+	  public String summary() {
+	    return "(" + id + ":" + delta + ")";
+	  }
+	  public static class EndSentinel extends DelayedTask {
+	    private ExecutorService exec;
+	    public EndSentinel(int delay, ExecutorService e) {
+	      super(delay);
+	      exec = e;
+	    }
+	    public void run() {
+	      for(DelayedTask pt : sequence) {
+	        printnb(pt.summary() + " ");
+	      }
+	      print();
+	      print(this + " Calling shutdownNow()");
+	      exec.shutdownNow();
+	    }
+	  }
+	}
+	 
+	class DelayedTaskConsumer implements Runnable {
+	  private DelayQueue<DelayedTask> q;
+	  public DelayedTaskConsumer(DelayQueue<DelayedTask> q) {
+	    this.q = q;
+	  }
+	  public void run() {
+	    try {
+	      while(!Thread.interrupted())
+	        q.take().run(); // Выполнение задачи в текущем потоке
+	    } catch(InterruptedException e) {
+	      // Приемлемый вариант выхода
+	    }
+	    print("Finished DelayedTaskConsumer");
+	  }
+	}
+	 
+	public class DelayQueueDemo {
+	  public static void main(String[] args) {
+	    Random rand = new Random(47);
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    DelayQueue<DelayedTask> queue =
+	      new DelayQueue<DelayedTask>();
+	    // Очередь заполняется задачами со случайной задержкой:
+	    for(int i = 0; i < 20; i++)
+	      queue.put(new DelayedTask(rand.nextInt(5000)));
+	    // Назначение точки остановки
+	    queue.add(new DelayedTask.EndSentinel(5000, exec));
+	    exec.execute(new DelayedTaskConsumer(queue));
+	  }
+	}
+
+**Output**
+
+>[128 ] Task 11 [200 ] Task 7 [429 ] Task 5 [520 ] 
+
+>Task 18 [555 ] Task 1 [961 ]
+
+>Task 4 [998 ] Task 16 [1207] Task 9 [1693] Task 2 
+
+>[1809] Task 14 [1861]
+
+>Task 3 [2278] Task 15 [3288] Task 10 [3551] Task 12 
+[4258] Task 0 [4258]
+
+>Task 19 [4522] Task 8 [4589] Task 13 [4861] Task 17 [4868] Task 6 (0:4258)
+
+>(1:555) (2:1693) (3:1861) (4:961) (5:429) (6:4868) (7:200) (8:4522) (9:1207)
+
+>(10:3288) (11:128) (12:3551) (13:4589) (14:1809) (15:2278) (16:998) (17:4861)
+
+>(18:520) (19:4258) (20:5000)
+[5000] 
+
+>Task 20 Calling shutdownNow()
+
+>Finished DelayedTaskConsumer
+
+ DelayedTask содержит контейнер List<DelayedTask> с именем sequence, в котором сохраняется порядок создания задач, и мы видим, что сортировка действительно выполняется.
+
+ Интерфейс Delayed содержит единственный метод getDelay(), который сообщает, сколько времени осталось до истечения задержки или как давно задержка истекла. Метод заставляет нас использовать класс TimeUnit, потому что его аргумент относится именно к этому типу. Впрочем, этот класс очень удобен, поскольку он позволяет легко преобразовывать единицы без каких-либо вычислений. Например, значение delta хранится в миллисекундах, а метод Java SE5 System.nanoTime() выдает значение в наносекундах. Чтобы преобразовать значение delta, достаточно указать исходные и итоговые единицы:
+
+    NANOSECONDS.convert(delta. MILL ISECONDS);
+
+ В getDelay() желаемые единицы передаются в аргументе unit. Аргумент используется для преобразования времени задержки во временные единицы, используемые вызывающей стороной.
+
+ Для выполнения сортировки интерфейс Delayed также наследует интерфейс Comparable, поэтому необходимо реализовать метод compareTo() для выполнения осмысленных сравнений. Методы toString() и summary() обеспечивают форматирование вывода.
+
+ Из выходных данных видно, что порядок создания задач не влияет на порядок их выполнения — вместо этого задачи, как и предполагалось, выполняются в порядке следования задержек.
+
+####PriorityBlockingQueue
+
+ Фактически класс PriorityBlockingQueue представляет приоритетную очередь с блокирующими операциями выборки. В следующем примере объектами в приоритетной очереди являются задачи, покидающие очередь в порядке приоритетов. Для определения этого порядка в класс PrioritizedTask включается поле priority:
+
+	//: concurrency/PriorityBlockingQueueDemo.java
+	import java.util.concurrent.*;
+	import java.util.*;
+	import static net.mindview.util.Print.*;
+	 
+	class PrioritizedTask implements
+	Runnable, Comparable<PrioritizedTask>  {
+	  private Random rand = new Random(47);
+	  private static int counter = 0;
+	  private final int id = counter++;
+	  private final int priority;
+	  protected static List<PrioritizedTask> sequence =
+	    new ArrayList<PrioritizedTask>();
+	  public PrioritizedTask(int priority) {
+	    this.priority = priority;
+	    sequence.add(this);
+	  }
+	  public int compareTo(PrioritizedTask arg) {
+	    return priority < arg.priority ? 1 :
+	      (priority > arg.priority ? -1 : 0);
+	  }
+	  public void run() {
+	    try {
+	      TimeUnit.MILLISECONDS.sleep(rand.nextInt(250));
+	    } catch(InterruptedException e) {
+	      // Приемлемый вариант выхода
+	    }
+	    print(this);
+	  }
+	  public String toString() {
+	    return String.format("[%1$-3d]", priority) +
+	      " Task " + id;
+	  }
+	  public String summary() {
+	    return "(" + id + ":" + priority + ")";
+	  }
+	  public static class EndSentinel extends PrioritizedTask {
+	    private ExecutorService exec;
+	    public EndSentinel(ExecutorService e) {
+	      super(-1); // Минимальный приоритет в этой программе
+	      exec = e;
+	    }
+	    public void run() {
+	      int count = 0;
+	      for(PrioritizedTask pt : sequence) {
+	        printnb(pt.summary());
+	        if(++count % 5 == 0)
+	          print();
+	      }
+	      print();
+	      print(this + " Calling shutdownNow()");
+	      exec.shutdownNow();
+	    }
+	  }
+	}
+	 
+	class PrioritizedTaskProducer implements Runnable {
+	  private Random rand = new Random(47);
+	  private Queue<Runnable> queue;
+	  private ExecutorService exec;
+	  public PrioritizedTaskProducer(
+	    Queue<Runnable> q, ExecutorService e) {
+	    queue = q;
+	    exec = e; // Используется для EndSentinel
+	  }
+	  public void run() {
+	    // Неограниченная очередь без блокировки. 
+	    // Быстрое заполнение случайными приоритетами:
+	    for(int i = 0; i < 20; i++) {
+	      queue.add(new PrioritizedTask(rand.nextInt(10)));
+	      Thread.yield();
+	    }
+	    // Добавление высокоприоритетных задач:
+	    try {
+	      for(int i = 0; i < 10; i++) {
+	        TimeUnit.MILLISECONDS.sleep(250);
+	        queue.add(new PrioritizedTask(10));
+	      }
+	      // Добавление заданий, начиная с наименьших приоритетов:
+	      for(int i = 0; i < 10; i++)
+	        queue.add(new PrioritizedTask(i));
+	      // Предохранитель для остановки всех задач::
+	      queue.add(new PrioritizedTask.EndSentinel(exec));
+	    } catch(InterruptedException e) {
+	      // Приемлемый вариант выхода
+	    }
+	    print("Finished PrioritizedTaskProducer");
+	  }
+	}
+	 
+	class PrioritizedTaskConsumer implements Runnable {
+	  private PriorityBlockingQueue<Runnable> q;
+	  public PrioritizedTaskConsumer(
+	    PriorityBlockingQueue<Runnable> q) {
+	    this.q = q;
+	  }
+	  public void run() {
+	    try {
+	      while(!Thread.interrupted())
+	        // Использование текущего потока для запуска задачи:
+	        q.take().run();
+	    } catch(InterruptedException e) {
+	      // Приемлемый вариант выхода
+	    }
+	    print("Finished PrioritizedTaskConsumer");
+	  }
+	}
+	 
+	public class PriorityBlockingQueueDemo {
+	  public static void main(String[] args) throws Exception {
+	    Random rand = new Random(47);
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    PriorityBlockingQueue<Runnable> queue =
+	      new PriorityBlockingQueue<Runnable>();
+	    exec.execute(new PrioritizedTaskProducer(queue, exec));
+	    exec.execute(new PrioritizedTaskConsumer(queue));
+	  }
+	} /* (Execute to see output) *///:~
+
+ Как и в предыдущем примере, последовательность создания объектов PrioritizedTask сохраняется в контейнере List sequence для сравнения с фактическим порядком выполнения. Метод run() делает небольшую паузу, а затем выводит информацию об объекте, а предохранитель EndSentinel выполняет те же функции, что и прежде.
+
+ PrioritizedTaskProducer и PrioritizedTaskConsumer связываются друг с другом через PriorityBlockingQueue. Так как сам блокирующий характер очереди обеспечивает всю необходимую синхронизацию, явная синхронизация не нужна — при чтении вам не нужно думать о том, содержит ли очередь элементы, потому что при отсутствии элементов очередь просто заблокирует читающую сторону.
+
+ Управление оранжереей на базе ScheduledExecutor
+ В главе 10 была представлена система управления гипотетической оранжереей, которая включала (отключала) различные устройства и регулировала их работу. Происходящее можно преобразовать в контекст многозадачности: каждое событие оранжереи представляет собой задачу, запускаемую в заранее заданное время. Класс ScheduledThreadPoolExecutor предоставляет именно тот сервис, который необходим для решения задачи. Используя методы schedule() (однократный запуск задачи) или scheduleAtFixedRate() (повторение задачи с постоянным промежутком), мы создаем объекты Runnable, которые должны запуститься в положенное время. Сравните это решение с тем, что приведено в главе 10, и посмотрите, насколько оно упрощается благодаря готовой функциональности ScheduledThreadPoolExecutor:
+
+	//: concurrency/GreenhouseScheduler.java
+	// Новая реализация іnnerclasses/GreenhouseController.java
+	// с использованием ScheduledThreadPoolExecutor.
+	// {Args: 5000}
+	import java.util.concurrent.*;
+	import java.util.*;
+	 
+	public class GreenhouseScheduler {
+	  private volatile boolean light = false;
+	  private volatile boolean water = false;
+	  private String thermostat = "Day";
+	  public synchronized String getThermostat() {
+	    return thermostat;
+	  }
+	  public synchronized void setThermostat(String value) {
+	    thermostat = value;
+	  }
+	  ScheduledThreadPoolExecutor scheduler =
+	    new ScheduledThreadPoolExecutor(10);
+	  public void schedule(Runnable event, long delay) {
+	    scheduler.schedule(event,delay,TimeUnit.MILLISECONDS);
+	  }
+	  public void
+	  repeat(Runnable event, long initialDelay, long period) {
+	    scheduler.scheduleAtFixedRate(
+	      event, initialDelay, period, TimeUnit.MILLISECONDS);
+	  }
+	  class LightOn implements Runnable {
+	    public void run() {
+	      // Put hardware control code here to
+	      // physically turn on the light.
+	      System.out.println("Turning on lights");
+	      light = true;
+	    }
+	  }
+	  class LightOff implements Runnable {
+	    public void run() {
+	      // Put hardware control code here to
+	      // physically turn off the light.
+	      System.out.println("Turning off lights");
+	      light = false;
+	    }
+	  }
+	  class WaterOn implements Runnable {
+	    public void run() {
+	      // Put hardware control code here.
+	      System.out.println("Turning greenhouse water on");
+	      water = true;
+	    }
+	  }
+	  class WaterOff implements Runnable {
+	    public void run() {
+	      // Put hardware control code here.
+	      System.out.println("Turning greenhouse water off");
+	      water = false;
+	    }
+	  }
+	  class ThermostatNight implements Runnable {
+	    public void run() {
+	      // Put hardware control code here.
+	      System.out.println("Thermostat to night setting");
+	      setThermostat("Night");
+	    }
+	  }
+	  class ThermostatDay implements Runnable {
+	    public void run() {
+	      // Put hardware control code here.
+	      System.out.println("Thermostat to day setting");
+	      setThermostat("Day");
+	    }
+	  }
+	  class Bell implements Runnable {
+	    public void run() { System.out.println("Bing!"); }
+	  }
+	  class Terminate implements Runnable {
+	    public void run() {
+	      System.out.println("Terminating");
+	      scheduler.shutdownNow();
+	      // Must start a separate task to do this job,
+	      // since the scheduler has been shut down:
+	      new Thread() {
+	        public void run() {
+	          for(DataPoint d : data)
+	            System.out.println(d);
+	        }
+	      }.start();
+	    }
+	  }
+	  // New feature: data collection
+	  static class DataPoint {
+	    final Calendar time;
+	    final float temperature;
+	    final float humidity;
+	    public DataPoint(Calendar d, float temp, float hum) {
+	      time = d;
+	      temperature = temp;
+	      humidity = hum;
+	    }
+	    public String toString() {
+	      return time.getTime() +
+	        String.format(
+	          " temperature: %1$.1f humidity: %2$.2f",
+	          temperature, humidity);
+	    }
+	  }
+	  private Calendar lastTime = Calendar.getInstance();
+	  { // Adjust date to the half hour
+	    lastTime.set(Calendar.MINUTE, 30);
+	    lastTime.set(Calendar.SECOND, 00);
+	  }
+	  private float lastTemp = 65.0f;
+	  private int tempDirection = +1;
+	  private float lastHumidity = 50.0f;
+	  private int humidityDirection = +1;
+	  private Random rand = new Random(47);
+	  List<DataPoint> data = Collections.synchronizedList(
+	    new ArrayList<DataPoint>());
+	  class CollectData implements Runnable {
+	    public void run() {
+	      System.out.println("Collecting data");
+	      synchronized(GreenhouseScheduler.this) {
+	        // Pretend the interval is longer than it is:
+	        lastTime.set(Calendar.MINUTE,
+	          lastTime.get(Calendar.MINUTE) + 30);
+	        // One in 5 chances of reversing the direction:
+	        if(rand.nextInt(5) == 4)
+	          tempDirection = -tempDirection;
+	        // Store previous value:
+	        lastTemp = lastTemp +
+	          tempDirection * (1.0f + rand.nextFloat());
+	        if(rand.nextInt(5) == 4)
+	          humidityDirection = -humidityDirection;
+	        lastHumidity = lastHumidity +
+	          humidityDirection * rand.nextFloat();
+	        // Calendar must be cloned, otherwise all
+	        // DataPoints hold references to the same lastTime.
+	        // For a basic object like Calendar, clone() is OK.
+	        data.add(new DataPoint((Calendar)lastTime.clone(),
+	          lastTemp, lastHumidity));
+	      }
+	    }
+	  }
+	  public static void main(String[] args) {
+	    GreenhouseScheduler gh = new GreenhouseScheduler();
+	    gh.schedule(gh.new Terminate(), 5000);
+	    // Former "Restart" class not necessary:
+	    gh.repeat(gh.new Bell(), 0, 1000);
+	    gh.repeat(gh.new ThermostatNight(), 0, 2000);
+	    gh.repeat(gh.new LightOn(), 0, 200);
+	    gh.repeat(gh.new LightOff(), 0, 400);
+	    gh.repeat(gh.new WaterOn(), 0, 600);
+	    gh.repeat(gh.new WaterOff(), 0, 800);
+	    gh.repeat(gh.new ThermostatDay(), 0, 1400);
+	    gh.repeat(gh.new CollectData(), 500, 500);
+	  }
+	} /* (Execute to see output) *///:~
+
+ В этой версии, помимо реорганизации кода, добавляется новая возможность: сбор данных о температуре и влажности в оранжерее. Объект DataPoint содержит и выводит одну точку данных, а запланированная задача CollectData генерирует данные имитации и включает их в List<DataPoint> при каждом запуске.
+
+ Обратите внимание на ключевые слова volatile и synchronized; благодаря им задачи не мешают работе друг друга. Все методы контейнера List с элементами DataPoint синхронизируются с использованием метода synchronizedList() библиотеки java.util.Соllectiоns при создании List.
+
+
+####Семафоры
+
+ При обычной блокировке доступ к ресурсу в любой момент времени разрешается только одной задаче. Семафор со счетчиком позволяет n задачам одновременно обращаться к ресурсу. Можно считать, что семафор «выдает разрешения» на использование ресурса, хотя никаких реальных объектов разрешений в этой схеме нет. В качестве примера рассмотрим концепцию пула объектов: объекты, входящие в пул, «выдаются» для использования, а затем снова возвращаются в пул после того, как пользователь закончит работу с ними. Эта функциональность инкапсулируется в параметризованном классе:
+
+	//: concurrency/Pool.java
+	// Использование Semaphore в Pool ограничивает количество 
+	// задач, которые могут использовать ресурс.
+	import java.util.concurrent.*;
+	import java.util.*;
+	 
+	public class Pool<T> {
+	  private int size;
+	  private List<T> items = new ArrayList<T>();
+	  private volatile boolean[] checkedOut;
+	  private Semaphore available;
+	  public Pool(Class<T> classObject, int size) {
+	    this.size = size;
+	    checkedOut = new boolean[size];
+	    available = new Semaphore(size, true);
+	    // Заполнение пула объектами :
+	    for(int i = 0; i < size; ++i)
+	      try {
+	        // Предполагается наличие конструктора по умолчанию:
+	        items.add(classObject.newInstance());
+	      } catch(Exception e) {
+	        throw new RuntimeException(e);
+	      }
+	  }
+	  public T checkOut() throws InterruptedException {
+	    available.acquire();
+	    return getItem();
+	  }
+	  public void checkIn(T x) {
+	    if(releaseItem(x))
+	      available.release();
+	  }
+	  private synchronized T getItem() {
+	    for(int i = 0; i < size; ++i)
+	      if(!checkedOut[i]) {
+	        checkedOut[i] = true;
+	        return items.get(i);
+	      }
+	    return null;  // Семафор предотвращает переход в зту точку
+	  }
+	  private synchronized boolean releaseItem(T item) {
+	    int index = items.indexOf(item);
+	    if(index == -1) return false; // Отсутствует в списке
+	    if(checkedOut[index]) {
+	      checkedOut[index] = false;
+	      return true;
+	    }
+	    return false; // He был освобожден
+	  }
+	}
+
+ В этой упрощенной форме конструктор использует newInstance() для заполнения пула объектами. Если вам понадобится новый объект, вызовите checkOut(); завершив работу с объектом, передайте его checkIn().
+
+ Логический массив checkedOut отслеживает выданные объекты. Для управления его содержимым используются методы getItem() и releaseItem(). В свою очередь, эти методы защищены семафором available, поэтому в checkOut() семафор available блокирует дальнейшее выполнение при отсутствии семафорных разрешений (то есть при отсутствии объектов в пуле). Метод checkIn() проверяет действительность возвращаемого объекта, и, если объект действителен, разрешение возвращается семафору.
+
+ Для примера мы воспользуемся классом Fat. Создание объектов этого класса является высокозатратной операцией, а на выполнение конструктора уходит много времени:
+
+	//: concurrency/Fat.java
+	// Объекты, создание которых занимает много времени.
+	 
+	public class Fat {
+	  private volatile double d; // Предотвращает оптимизацию
+	  private static int counter = 0;
+	  private final int id = counter++;
+	  public Fat() {
+	    // Затратная, прервываемая операция:
+	    for(int i = 1; i < 10000; i++) {
+	      d += (Math.PI + Math.E) / (double)i;
+	    }
+	  }
+	  public void operation() { System.out.println(this); }
+	  public String toString() { return "Fat id: " + id; }
+	}
+
+ Мы создадим пул объектов Fat, чтобы свести к минимуму затраты на выполнение конструктора. Для тестирования класса Pool будет создана задача, которая забирает объекты Fat для использования, удерживает их в течение некоторого времени, а затем возвращает обратно:
+
+	//: concurrency/SemaphoreDemo.java
+	// Тестирование класса Pool
+	import java.util.concurrent.*;
+	import java.util.*;
+	import static net.mindview.util.Print.*;
+	 
+	// Задача для получения ресурса из пула:
+	class CheckoutTask<T> implements Runnable {
+	  private static int counter = 0;
+	  private final int id = counter++;
+	  private Pool<T> pool;
+	  public CheckoutTask(Pool<T> pool) {
+	    this.pool = pool;
+	  }
+	  public void run() {
+	    try {
+	      T item = pool.checkOut();
+	      print(this + "checked out " + item);
+	      TimeUnit.SECONDS.sleep(1);
+	      print(this +"checking in " + item);
+	      pool.checkIn(item);
+	    } catch(InterruptedException e) {
+	      // Приемлемый способ завершения
+	    }
+	  }
+	  public String toString() {
+	    return "CheckoutTask " + id + " ";
+	  }
+	}
+	 
+	public class SemaphoreDemo {
+	  final static int SIZE = 25;
+	  public static void main(String[] args) throws Exception {
+	    final Pool<Fat> pool =
+	      new Pool<Fat>(Fat.class, SIZE);
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    for(int i = 0; i < SIZE; i++)
+	      exec.execute(new CheckoutTask<Fat>(pool));
+	    print("All CheckoutTasks created");
+	    List<Fat> list = new ArrayList<Fat>();
+	    for(int i = 0; i < SIZE; i++) {
+	      Fat f = pool.checkOut();
+	      printnb(i + ": main() thread checked out ");
+	      f.operation();
+	      list.add(f);
+	    }
+	    Future<?> blocked = exec.submit(new Runnable() {
+	      public void run() {
+	        try {
+	          // Семафор предотвращает лишний вызов checkout. 
+	          // поэтому следующий вызов блокируется:
+	          pool.checkOut();
+	        } catch(InterruptedException e) {
+	          print("checkOut() Interrupted");
+	        }
+	      }
+	    });
+	    TimeUnit.SECONDS.sleep(2);
+	    blocked.cancel(true); // Выход из заблокированного вызова
+	    print("Checking in objects in " + list);
+	    for(Fat f : list)
+	      pool.checkIn(f);
+	    for(Fat f : list)
+	      pool.checkIn(f); // Второй вызов checkIn игнорируется
+	    exec.shutdown();
+	  }
+	} /* (Execute to see output) *///:~
+
+ В коде main() создается объект Pool для хранения объектов Fat, после чего группа задач CheckoutTask начинает использовать Pool. Далее поток main() начинает выдавать объекты Fat, не возвращая их обратно. После того как все объекты пула будут выданы, семафор запрещает дальнейшие выдачи. Метод run() блокируется, и через две секунды вызывается метод cancel(). Лишние возвраты Pool игнорирует.
+
+####Exchanger
+
+ Класс Exchanger представляет собой «барьер», который меняет местами объекты двух задач. На подходе к барьеру задачи имеют один объект, а на выходе — объект, ранее удерживавшийся другой задачей. Объекты Exchanger обычно используются в тех ситуациях, когда одна задача создает высокозатратные объекты, а другая задача эти объекты потребляет.
+
+ Чтобы опробовать на практике класс Exchanger, мы создадим задачу-поставщика и задачу-потребителя, которые благодаря параметризации и генераторам могут работать с объектами любого типа. Затем эти параметризованные задачи будут применены к классу Fat. ExchangerProducer и ExchangerConsumer меняют местами List<T>; при вызове метода Exchanger.exchange() вызов блокируется до тех пор, пока парная задача не вызовет свой метод exchange(), после чего оба метода exchange() завершаются, а контейнеры List<T> меняются местами:
+
+	//: concurrency/ExchangerDemo.java
+	import java.util.concurrent.*;
+	import java.util.*;
+	import net.mindview.util.*;
+	 
+	class ExchangerProducer<T> implements Runnable {
+	  private Generator<T> generator;
+	  private Exchanger<List<T>> exchanger;
+	  private List<T> holder;
+	  ExchangerProducer(Exchanger<List<T>> exchg,
+	  Generator<T> gen, List<T> holder) {
+	    exchanger = exchg;
+	    generator = gen;
+	    this.holder = holder;
+	  }
+	  public void run() {
+	    try {
+	      while(!Thread.interrupted()) {
+	        for(int i = 0; i < ExchangerDemo.size; i++)
+	          holder.add(generator.next());
+	        // Заполненный контейнер заменяется пустым::
+	        holder = exchanger.exchange(holder);
+	      }
+	    } catch(InterruptedException e) {
+	      // Приемлемый способ завершения.
+	    }
+	  }
+	}
+	 
+	class ExchangerConsumer<T> implements Runnable {
+	  private Exchanger<List<T>> exchanger;
+	  private List<T> holder;
+	  private volatile T value;
+	  ExchangerConsumer(Exchanger<List<T>> ex, List<T> holder){
+	    exchanger = ex;
+	    this.holder = holder;
+	  }
+	  public void run() {
+	    try {
+	      while(!Thread.interrupted()) {
+	        holder = exchanger.exchange(holder);
+	        for(T x : holder) {
+	          value = x; // Выборка значения
+	          holder.remove(x); // Нормально для CopyOnWriteArrayList
+	        }
+	      }
+	    } catch(InterruptedException e) {
+	      // Приемлемый способ завершения.
+	    }
+	    System.out.println("Final value: " + value);
+	  }
+	}
+	 
+	public class ExchangerDemo {
+	  static int size = 10;
+	  static int delay = 5; // Секунды
+	  public static void main(String[] args) throws Exception {
+	    if(args.length > 0)
+	      size = new Integer(args[0]);
+	    if(args.length > 1)
+	      delay = new Integer(args[1]);
+	    ExecutorService exec = Executors.newCachedThreadPool();
+	    Exchanger<List<Fat>> xc = new Exchanger<List<Fat>>();
+	    List<Fat>
+	      producerList = new CopyOnWriteArrayList<Fat>(),
+	      consumerList = new CopyOnWriteArrayList<Fat>();
+	    exec.execute(new ExchangerProducer<Fat>(xc,
+	      BasicGenerator.create(Fat.class), producerList));
+	    exec.execute(
+	      new ExchangerConsumer<Fat>(xc,consumerList));
+	    TimeUnit.SECONDS.sleep(delay);
+	    exec.shutdownNow();
+	  }
+	}
+
+**Output:**
+
+>Final value: Fat id: 29999
+
+ В методе main() для обеих задач создается один объект Exchanger, а для перестановки создаются два контейнера CopyOnWriteArrayList. Эта разновидность List нормально переносит вызов метода remove() при перемещении по списку, не выдавая исключения ConcurrentModificationException.
+
+ ExchangerProducer заполняет список, а затем меняет местами заполненный список с пустым, передаваемым от ExchangerConsumer. Благодаря Exchanger заполнение списка происходит одновременно с использованием уже заполненного списка.
+
+
+###Резюме
+ В этой главе я постарался изложить основы многопоточного программирования с использованием потоков Java. Прочитав ее, читатель должен понять следующее:
+
+ 1. Программу можно разделить на несколько независимых задач.
+ 2. Необходимо заранее предусмотреть всевозможные проблемы, возникающие при завершении задач.
+ 3. Задачи, работающие с общими ресурсами, могут мешать друг другу. Основным средством предотвращения конфликтов является блокировка.
+ 4. В неаккуратно спроектированных многозадачных системах возможны взаимные блокировки.
+
+ Очень важно понимать, когда рационально использовать параллельное выполнение, а когда этого делать не стоит. Основные причины для его использования:
+
+ - управление несколькими подзадачами, одновременное  выполнение которых позволяет эффективнее распоряжаться ресурсами компьютера (включая возможность незаметного распределения этих задач по нескольким процессорам);
+ - улучшенная организация кода;
+ - удобство для пользователя.
+
+ Классический пример распределения ресурсов — использование процессора во время ожидания завершения операций ввода/вывода. Классический пример чуткого пользовательского интерфейса — отслеживание нажатий кнопки «Прервать» во время продолжительного процесса загрузки.
+
+ Дополнительным преимуществом потоков является то, что они заменяют «тяжелое» переключение контекста процессов (порядка 1000 и более инструкций) «легким» переключением контекста выполнения (около 100 инструкций). Так как все потоки процесса разделяют одно и то же пространство памяти, легкое переключение затрагивает только выполнение программы и локальные переменные. С другой стороны, чередование процессов — тяжелое переключение контекста — требует обновления всего пространства памяти.
+
+Основные недостатки многозадачности:
+
+ 1. Замедление программы, связанное с ожиданием освобождения блокированных ресурсов.
+ 2. Дополнительная нагрузка на процессор для управления потоками.
+ 3. Совершенно ненужная сложность, являющаяся следствием неудачных решений при проектировании программы.
+ 4. Аномальные ситуации: взаимные блокировки, конфликты доступа, гонки и т. д.
+ 5. Непоследовательное поведение на различных платформах. Например, при разработке некоторых примеров для данной книги я обнаружил ситуации гонки, быстро проявлявшиеся на некоторых компьютерах, но незаметные на других.
+
+ Пожалуй, основные трудности с потоками возникают тогда, когда несколько потоков одновременно пытаются использовать один и тот же ресурс — например, память объекта, и вы должны сделать так, чтобы этого ни в коем случае не произошло. Для этого нужно разумно использовать ключевое слово synchronized — полезный инструмент языка, который тем не менее необходимо хорошо понимать (без этого в программе может незаметно возникнуть опасность взаимной блокировки).
+
+ Вдобавок многозадачное программирование сродни искусству. Язык Java существует для того, чтобы вы могли свободно создавать столько объектов, сколько вам нужно для решения вашей задачи — по крайней мере, в теории это так. (Например, создание миллионов объектов для проведения проекционно-разностного анализа вряд ли будет иметь смысл в Java.) Однако оказывается, что количество потоков упирается в определенный «потолок», так как после превышения этой-границы потоки становятся неподатливыми. Это критическое число трудно определить, зачастую оно зависит от операционной системы и виртуальной машины Java, значение может находиться где-то в районе сотни, а может исчисляться тысячами. Если для решения своей задачи вам требуется небольшая группа потоков, это ограничение не актуально, но при разработке больших программ оно может создать затруднения.
